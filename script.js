@@ -19,6 +19,7 @@ let isPageTransitioning = false;
 let dailyWordCount = DEFAULT_DAILY_WORD_COUNT;
 let currentStudyDay = 1;
 let completedStudyDay = 0;
+let isStudyDayTransitioning = false;
 
 const vocabularyList = [
   { term: "强化学习", korean: "강화 학습", term_en: "Reinforcement Learning", description: "智能体通过与环境交互，并依据奖励或惩罚信号来学习行动策略的方法。" },
@@ -463,7 +464,7 @@ function renderStudyDayNavigation(totalDays) {
   previousButton.type = "button";
   previousButton.dataset.studyDirection = "previous";
   previousButton.textContent = languageText.previous;
-  previousButton.disabled = currentStudyDay <= 1;
+  previousButton.disabled = isStudyDayTransitioning || currentStudyDay <= 1;
   navigation.append(previousButton);
 
   const nextButton = document.createElement("button");
@@ -471,7 +472,7 @@ function renderStudyDayNavigation(totalDays) {
   nextButton.type = "button";
   nextButton.dataset.studyDirection = "next";
   nextButton.textContent = languageText.next;
-  nextButton.disabled = currentStudyDay >= totalDays;
+  nextButton.disabled = isStudyDayTransitioning || currentStudyDay >= totalDays;
   navigation.append(nextButton);
 }
 
@@ -547,6 +548,11 @@ function initializeStudyPlan() {
 }
 
 function handleDailyWordCountChange(event) {
+  if (isStudyDayTransitioning) {
+    event.currentTarget.value = String(dailyWordCount);
+    return;
+  }
+
   const newDailyWordCount = event.currentTarget.valueAsNumber;
   if (!Number.isInteger(newDailyWordCount) || newDailyWordCount < 1 || newDailyWordCount > MAX_DAILY_WORD_COUNT) {
     event.currentTarget.value = String(dailyWordCount);
@@ -569,6 +575,10 @@ function handleDailyWordCountChange(event) {
 }
 
 function handleStudyDayTabClick(event) {
+  if (isStudyDayTransitioning) {
+    return;
+  }
+
   const tab = event.target.closest("[data-study-day]");
   if (!tab) {
     return;
@@ -579,6 +589,10 @@ function handleStudyDayTabClick(event) {
 }
 
 function handleStudyDayNavigation(event) {
+  if (isStudyDayTransitioning) {
+    return;
+  }
+
   const button = event.target.closest("[data-study-direction]");
   if (!button || button.disabled) {
     return;
@@ -591,11 +605,73 @@ function handleStudyDayNavigation(event) {
     return;
   }
 
+  transitionToStudyDay(targetDay, direction);
+}
+
+async function transitionToStudyDay(targetDay, direction) {
+  const viewport = document.querySelector("#vocabulary-page-viewport");
+  const page = document.querySelector(".vocabulary-table-wrap");
+  if (!viewport || !page) {
+    currentStudyDay = targetDay;
+    renderVocabulary();
+    return;
+  }
+
+  isStudyDayTransitioning = true;
+  viewport.setAttribute("aria-busy", "true");
+  const totalDays = Math.ceil(vocabularyList.length / dailyWordCount);
+  renderStudyDayNavigation(totalDays);
+
+  const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
+  if (duration === 0) {
+    currentStudyDay = targetDay;
+    renderVocabulary();
+    isStudyDayTransitioning = false;
+    viewport.removeAttribute("aria-busy");
+    renderStudyDayNavigation(totalDays);
+    return;
+  }
+
+  const startHeight = viewport.getBoundingClientRect().height;
+  viewport.style.height = `${startHeight}px`;
+  const exitAnimation = page.animate(
+    [
+      { transform: "translateX(0)", opacity: 1 },
+      { transform: `translateX(${direction > 0 ? "-100%" : "100%"})`, opacity: 0 },
+    ],
+    { duration, easing: "ease", fill: "forwards" }
+  );
+  await exitAnimation.finished;
+  exitAnimation.cancel();
+
   currentStudyDay = targetDay;
   renderVocabulary();
+  const targetHeight = page.getBoundingClientRect().height;
+  const entryAnimation = page.animate(
+    [
+      { transform: `translateX(${direction > 0 ? "100%" : "-100%"})`, opacity: 0 },
+      { transform: "translateX(0)", opacity: 1 },
+    ],
+    { duration, easing: "ease", fill: "forwards" }
+  );
+  const heightAnimation = viewport.animate(
+    [{ height: `${startHeight}px` }, { height: `${targetHeight}px` }],
+    { duration, easing: "ease", fill: "forwards" }
+  );
+  await Promise.all([entryAnimation.finished, heightAnimation.finished]);
+  entryAnimation.cancel();
+  heightAnimation.cancel();
+  viewport.style.height = "";
+  viewport.removeAttribute("aria-busy");
+  isStudyDayTransitioning = false;
+  renderStudyDayNavigation(totalDays);
 }
 
 function handleStudyDayComplete() {
+  if (isStudyDayTransitioning) {
+    return;
+  }
+
   completedStudyDay = currentStudyDay;
   localStorage.setItem(STUDY_PROGRESS_STORAGE_KEY, String(completedStudyDay));
   updateStudyPlanStatus();

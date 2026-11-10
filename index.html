@@ -122,17 +122,19 @@
           data-i18n-placeholder="vocabulary.searchPlaceholder"
           placeholder="输入中文、韩文或英文"
         >
-        <div class="vocabulary-table-wrap">
-          <table class="table table-zebra vocabulary-table">
-            <thead>
-              <tr>
-                <th scope="col" data-i18n="vocabulary.chinese">中文</th>
-                <th scope="col" data-i18n="vocabulary.korean">韩文</th>
-                <th scope="col" data-i18n="vocabulary.englishDescription">英文与描述</th>
-              </tr>
-            </thead>
-            <tbody id="vocabulary-list"></tbody>
-          </table>
+        <div class="vocabulary-page-viewport" id="vocabulary-page-viewport">
+          <div class="vocabulary-table-wrap">
+            <table class="table table-zebra vocabulary-table">
+              <thead>
+                <tr>
+                  <th scope="col" data-i18n="vocabulary.chinese">中文</th>
+                  <th scope="col" data-i18n="vocabulary.korean">韩文</th>
+                  <th scope="col" data-i18n="vocabulary.englishDescription">英文与描述</th>
+                </tr>
+              </thead>
+              <tbody id="vocabulary-list"></tbody>
+            </table>
+          </div>
         </div>
         <div class="daily-day-navigation flex justify-between gap-3" id="study-day-navigation" aria-label="学习日翻页"></div>
         <p class="vocabulary-empty" id="vocabulary-empty" role="status" hidden data-i18n="vocabulary.noResults">没有找到匹配的词语。</p>

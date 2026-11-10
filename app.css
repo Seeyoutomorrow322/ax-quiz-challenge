@@ -574,8 +574,13 @@ input {
   border-color: #dfe4ef;
 }
 
-.vocabulary-table-wrap {
+.vocabulary-page-viewport {
+  overflow: hidden;
   margin: 1.25rem 0;
+}
+
+.vocabulary-table-wrap {
+  margin: 0;
   overflow-x: auto;
   border: 1px solid #e5e9f1;
   border-radius: 1rem;
@@ -594,6 +599,10 @@ input {
 
 .vocabulary-table td {
   vertical-align: middle;
+}
+
+.vocabulary-table tbody tr {
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .vocabulary-term-line {
