@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AX Quiz Challenge：AI·IT 术语闯关小游戏">
+  <meta name="theme-color" content="#f6f7fc">
+  <title>AX Quiz Challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="questions.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="navbar site-header sticky top-0 z-30">
+    <a class="brand" href="#home" data-page="home" aria-label="AX Quiz Challenge - 首页">
+      <span class="brand-mark" aria-hidden="true">AX</span>
+      <span>AX Quiz Challenge</span>
+    </a>
+    <div class="header-controls">
+      <nav class="menu menu-horizontal site-nav" aria-label="页面导航" data-i18n-aria-label="accessibility.navigation">
+        <a href="#home" data-page="home" data-i18n="navigation.home">开始</a>
+        <a href="#vocabulary-page" data-page="vocabulary-page" data-i18n="navigation.vocabulary">词语库</a>
+        <a href="#quiz-page" data-page="quiz-page" data-i18n="navigation.quiz">答题</a>
+        <a href="#results" data-page="results" data-i18n="navigation.results">成绩</a>
+      </nav>
+      <div class="language-switcher" role="group" aria-label="选择界面语言" data-i18n-aria-label="accessibility.language">
+        <button class="btn btn-ghost btn-sm language-button is-active" type="button" data-lang="zh" aria-pressed="true">中文</button>
+        <button class="btn btn-ghost btn-sm language-button" type="button" data-lang="ko" aria-pressed="false">한국어</button>
+        <button class="btn btn-ghost btn-sm language-button" type="button" data-lang="en" aria-pressed="false">English</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="flip-container" id="page-flip-container">
+    <section class="panel hero card" id="home" aria-labelledby="home-title">
+      <div class="hero-body card-body grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(260px,0.7fr)] lg:gap-12">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="home.eyebrow">AI · IT TERMINOLOGY</p>
+          <h1 id="home-title" data-i18n="home.title">准备好挑战术语了吗？</h1>
+          <p class="intro" data-i18n="home.intro">通过中、韩、英术语练习，让每天学习一点点变得有趣。</p>
+          <div class="summary-row">
+            <span class="badge badge-outline" data-i18n="home.round">每轮 10 道题</span>
+            <span class="badge badge-outline" data-i18n="home.points">每题 10 分</span>
+            <span class="badge badge-outline">中文 · 한국어 · English</span>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg button-primary" type="button" data-page="vocabulary-page" data-i18n="button.openVocabulary">查看词语库</button>
+            <button class="btn btn-outline btn-lg" type="button" data-page="quiz-page" data-i18n="button.start">开始答题</button>
+          </div>
+          <div class="home-about">
+            <h2 class="home-about-title" data-i18n="about.title">关于 AX Quiz Challenge</h2>
+            <p class="home-about-description" data-i18n="about.description">这是一个帮助学习者认识 AI·IT 术语的中、韩、英闯关小游戏。</p>
+            <ul class="feature-list">
+              <li data-i18n="about.featureRandom">随机练习，减少重复做题</li>
+              <li data-i18n="about.featureFeedback">每题即时反馈，逐步累计成绩</li>
+              <li data-i18n="about.featureResponsive">支持电脑与手机浏览</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="hero-spotlight card" aria-label="学习进度摘要" data-i18n-aria-label="accessibility.scoreSummary">
+          <div class="spotlight-topline">
+            <span data-i18n="score.highestHome">历史最高分：0</span>
+            <span class="badge badge-primary badge-outline" data-i18n="quiz.personalBest">个人最佳</span>
+          </div>
+          <strong class="spotlight-score" aria-hidden="true">✦</strong>
+          <p class="spotlight-caption" data-i18n="home.spotlightCaption">每答一题，进步一点。</p>
+          <div class="spotlight-divider"></div>
+          <div class="spotlight-meta">
+            <span data-i18n="home.round">每轮 10 道题</span>
+            <strong>10 × 10</strong>
+          </div>
+          <div class="spotlight-meta">
+            <span data-i18n="home.points">每题 10 分</span>
+            <strong>100 pts</strong>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel vocabulary-panel card" id="vocabulary-page" aria-labelledby="vocabulary-title" hidden>
+      <div class="card-body">
+        <p class="eyebrow" data-i18n="vocabulary.eyebrow">VOCABULARY</p>
+        <h1 id="vocabulary-title" data-i18n="vocabulary.title">AI·IT 词语库</h1>
+        <p class="intro" data-i18n="vocabulary.description">搜索并学习题库中的中文、韩文和英文术语。</p>
+        <section class="daily-plan card" aria-labelledby="daily-plan-title">
+          <div class="daily-plan-header">
+            <div>
+              <p class="eyebrow" data-i18n="vocabulary.studyDays">每日学习计划</p>
+              <p class="daily-plan-summary" id="study-day-summary">Day 1 · 10 个单词</p>
+            </div>
+            <div class="daily-count-control">
+              <label class="search-label" for="daily-word-count" data-i18n="vocabulary.dailyCountLabel">每日学习单词数</label>
+              <input
+                class="input input-bordered daily-word-count"
+                id="daily-word-count"
+                type="number"
+                min="1"
+                max="50"
+                step="1"
+                value="10"
+                aria-describedby="daily-count-help"
+              >
+              <span class="daily-count-help" id="daily-count-help" data-i18n="vocabulary.dailyCountHelp">设置每天学习的词数（1–50）</span>
+            </div>
+          </div>
+          <div class="tabs tabs-boxed study-day-tabs" id="study-day-tabs" role="tablist" aria-label="每日学习计划"></div>
+          <div class="daily-plan-footer">
+            <p class="study-progress-status" id="study-progress-status" role="status" aria-live="polite"></p>
+            <button class="btn btn-secondary button-secondary" id="complete-study-day" type="button" data-i18n="vocabulary.markComplete">完成今日学习</button>
+          </div>
+        </section>
+        <label class="search-label" for="vocabulary-search" data-i18n="vocabulary.searchLabel">搜索词语</label>
+        <input
+          class="input input-bordered vocabulary-search"
+          id="vocabulary-search"
+          type="search"
+          data-i18n-placeholder="vocabulary.searchPlaceholder"
+          placeholder="输入中文、韩文或英文"
+        >
+        <div class="vocabulary-table-wrap">
+          <table class="table table-zebra vocabulary-table">
+            <thead>
+              <tr>
+                <th scope="col" data-i18n="vocabulary.chinese">中文</th>
+                <th scope="col" data-i18n="vocabulary.korean">韩文</th>
+                <th scope="col" data-i18n="vocabulary.englishDescription">英文与描述</th>
+              </tr>
+            </thead>
+            <tbody id="vocabulary-list"></tbody>
+          </table>
+        </div>
+        <div class="daily-day-navigation flex justify-between gap-3" id="study-day-navigation" aria-label="学习日翻页"></div>
+        <p class="vocabulary-empty" id="vocabulary-empty" role="status" hidden data-i18n="vocabulary.noResults">没有找到匹配的词语。</p>
+        <p class="speech-status" id="speech-status" role="status" aria-live="polite"></p>
+        <div>
+          <button class="btn btn-primary button-primary" id="start-quiz-button" type="button" data-i18n="button.start">开始答题</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel quiz-panel card" id="quiz-page" aria-labelledby="quiz-title" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow" data-i18n="quiz.questionCount">QUESTION 01 / 10</p>
+          <h2 id="quiz-title" data-i18n="navigation.quiz">答题页面</h2>
+        </div>
+        <p class="badge badge-lg score-chip"><span data-i18n="quiz.currentScore">当前得分</span>: 0</p>
+      </div>
+
+      <div class="quiz-progress-header">
+        <span data-i18n="quiz.progressLabel">本轮进度</span>
+        <span data-i18n="quiz.questionCount">第 01 题 / 共 10 题</span>
+      </div>
+      <progress
+        class="progress progress-primary progress-track"
+        value="10"
+        max="100"
+        aria-label="答题进度：第 1 题，共 10 题"
+        data-i18n-aria-label="accessibility.progress"
+      >10%</progress>
+
+      <div class="question-card card">
+        <div class="card-body">
+          <p class="question-label" data-i18n="quiz.questionExample">中文问题示例</p>
+          <h3>“人工智能”的英文术语是什么？</h3>
+        </div>
+      </div>
+
+      <div class="options" aria-label="答案选项" data-i18n-aria-label="accessibility.options">
+        <button class="btn btn-outline option" type="button"><span>A</span> Artificial intelligence</button>
+        <button class="btn btn-outline option" type="button"><span>B</span> Database</button>
+        <button class="btn btn-outline option" type="button"><span>C</span> Cloud computing</button>
+        <button class="btn btn-outline option" type="button"><span>D</span> User interface</button>
+      </div>
+      <p class="feedback" role="status" aria-live="polite" data-i18n="quiz.feedback">选择答案后，这里显示答对或答错的提示。</p>
+    </section>
+
+    <section class="panel results-panel card" id="results" aria-labelledby="results-title" hidden>
+      <div class="card-body items-center">
+        <p class="eyebrow" data-i18n="score.complete">CHALLENGE COMPLETE</p>
+        <h2 id="results-title" data-i18n="navigation.results">成绩</h2>
+        <p class="result-label" data-i18n="score.final">最终得分</p>
+        <p class="result-score">0<span data-i18n="score.outOf"> / 100 分</span></p>
+        <p class="result-note"><span data-i18n="score.highest">历史最高分</span>: 0</p>
+        <button class="btn btn-primary btn-lg button-primary" type="button" data-i18n="button.replay">再玩一次</button>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p data-i18n="footer.text">AX Quiz Challenge · 学习 AI 与 IT 术语，从一题开始。</p>
+  </footer>
+</body>
+</html>

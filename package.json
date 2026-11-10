@@ -1,0 +1,14 @@
+{
+  "name": "ax-quiz-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i app.css -o style.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i app.css -o style.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.13",
+    "daisyui": "^5.1.27",
+    "tailwindcss": "^4.1.13"
+  }
+}
