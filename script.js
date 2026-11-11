@@ -11,6 +11,7 @@ const STUDY_PROGRESS_STORAGE_KEY = "axQuizStudyProgress";
 const DEFAULT_DAILY_WORD_COUNT = 10;
 const MAX_DAILY_WORD_COUNT = 50;
 let currentLanguage = "zh";
+let currentLang = "zh";
 let currentRoundQuestions = [];
 let isAnswerLocked = false;
 let currentFeedbackKey = "";
@@ -72,7 +73,19 @@ const vocabularyList = [
   { term: "传输层安全协议", korean: "전송 계층 보안", term_en: "Transport Layer Security (TLS)", description: "用于保护网络通信机密性和完整性的加密协议，常用于 HTTPS。" },
   { term: "负载均衡", korean: "로드 밸런싱", term_en: "Load Balancing", description: "将网络请求分配到多个服务器或资源，以提升可用性和处理能力的技术。" },
   { term: "内容分发网络", korean: "콘텐츠 전송 네트워크", term_en: "Content Delivery Network (CDN)", description: "通过分布在多个位置的服务器缓存并交付内容，以降低访问延迟的网络服务。" }
-];
+].map((term) => {
+  const question = questionBank.find((item) => item.term === term.term);
+  return {
+    ...term,
+    explanation: question
+      ? question.explanation
+      : {
+        zh: term.description,
+        ko: `한국어 설명 번역을 입력하세요. (${term.term_en})`,
+        en: `Add the English description translation here. (${term.term_en})`
+      }
+  };
+});
 
 // 界面翻译只作用于带有 data-i18n 的 UI 元素，不会改动题目或答案选项。
 const translations = {
@@ -349,6 +362,7 @@ function switchLanguage(lang) {
   }
 
   currentLanguage = lang;
+  currentLang = lang;
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const translationKey = element.dataset.i18n;
@@ -438,7 +452,7 @@ function renderVocabulary() {
       createSpeechButton(term.term_en, "en")
     );
     englishDescription.className = "vocabulary-description";
-    englishDescription.textContent = term.description;
+    englishDescription.textContent = term.explanation[currentLang];
     englishCell.append(englishTerm, englishDescription);
 
     row.append(chineseCell, koreanCell, englishCell);
@@ -794,6 +808,7 @@ function getRandomQuestions() {
       || typeof question.korean !== "string"
       || typeof question.term_en !== "string"
       || typeof question.description !== "string"
+      || !hasAllTranslations(question.explanation)
       || !hasAllTranslations(question.question)
       || !Array.isArray(question.options)
       || question.options.length !== 4
@@ -804,7 +819,7 @@ function getRandomQuestions() {
   );
 
   if (hasInvalidQuestion) {
-    throw new Error("题库格式有误：每题需要中韩英题干、4 组选项翻译和有效的正确答案下标。");
+    throw new Error("题库格式有误：每题需要中韩英解释、题干、4 组选项翻译和有效的正确答案下标。");
   }
 
   return selectedQuestions;
