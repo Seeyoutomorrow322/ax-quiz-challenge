@@ -87,33 +87,6 @@
         <p class="eyebrow" data-i18n="vocabulary.eyebrow">VOCABULARY</p>
         <h1 id="vocabulary-title" data-i18n="vocabulary.title">AI·IT 词语库</h1>
         <p class="intro" data-i18n="vocabulary.description">搜索并学习题库中的中文、韩文和英文术语。</p>
-        <section class="daily-plan card" aria-labelledby="daily-plan-title">
-          <div class="daily-plan-header">
-            <div>
-              <p class="eyebrow" data-i18n="vocabulary.studyDays">每日学习计划</p>
-              <p class="daily-plan-summary" id="study-day-summary">Day 1 · 10 个单词</p>
-            </div>
-            <div class="daily-count-control">
-              <label class="search-label" for="daily-word-count" data-i18n="vocabulary.dailyCountLabel">每日学习单词数</label>
-              <input
-                class="input input-bordered daily-word-count"
-                id="daily-word-count"
-                type="number"
-                min="1"
-                max="50"
-                step="1"
-                value="10"
-                aria-describedby="daily-count-help"
-              >
-              <span class="daily-count-help" id="daily-count-help" data-i18n="vocabulary.dailyCountHelp">设置每天学习的词数（1–50）</span>
-            </div>
-          </div>
-          <div class="tabs tabs-boxed study-day-tabs" id="study-day-tabs" role="tablist" aria-label="每日学习计划"></div>
-          <div class="daily-plan-footer">
-            <p class="study-progress-status" id="study-progress-status" role="status" aria-live="polite"></p>
-            <button class="btn btn-secondary button-secondary" id="complete-study-day" type="button" data-i18n="vocabulary.markComplete">完成今日学习</button>
-          </div>
-        </section>
         <label class="search-label" for="vocabulary-search" data-i18n="vocabulary.searchLabel">搜索词语</label>
         <input
           class="input input-bordered vocabulary-search"
@@ -136,7 +109,7 @@
             </table>
           </div>
         </div>
-        <div class="daily-day-navigation flex justify-between gap-3" id="study-day-navigation" aria-label="学习日翻页"></div>
+        <div class="daily-day-navigation flex justify-between gap-3" id="study-day-navigation" aria-label="词语翻页"></div>
         <p class="vocabulary-empty" id="vocabulary-empty" role="status" hidden data-i18n="vocabulary.noResults">没有找到匹配的词语。</p>
         <p class="speech-status" id="speech-status" role="status" aria-live="polite"></p>
         <div>

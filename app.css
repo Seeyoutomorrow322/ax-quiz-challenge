@@ -458,104 +458,10 @@ input {
   line-height: 1.7;
 }
 
-.daily-plan {
-  display: grid;
-  gap: 1rem;
-  margin: 1.5rem 0 1.25rem;
-  padding: clamp(1rem, 3vw, 1.5rem);
-  border: 1px solid #e6e5f7;
-  border-radius: 1.15rem;
-  background: linear-gradient(135deg, #faf9ff, #fff 75%);
-}
-
-.daily-plan-header,
-.daily-plan-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.daily-plan-header .eyebrow {
-  margin-bottom: 0.35rem;
-}
-
-.daily-plan-summary {
-  margin: 0;
-  color: #35415f;
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-.daily-count-control {
-  display: grid;
-  grid-template-columns: auto 5.25rem;
-  align-items: center;
-  gap: 0.35rem 0.65rem;
-}
-
-.daily-count-control .search-label {
-  margin: 0;
-  text-align: right;
-}
-
-.daily-word-count {
-  min-height: 2.7rem;
-  padding-inline: 0.5rem;
-  text-align: center;
-  font-weight: 750;
-}
-
-.daily-word-count[aria-invalid="true"] {
-  border-color: #dc5460;
-}
-
-.daily-count-help {
-  grid-column: 1 / -1;
-  color: #858da0;
-  font-size: 0.72rem;
-  text-align: right;
-}
-
-.study-day-tabs {
-  display: flex;
-  max-width: 100%;
-  gap: 0.3rem;
-  overflow-x: auto;
-  padding: 0.4rem;
-}
-
 .daily-day-navigation {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.study-day-tab {
-  flex: 0 0 auto;
-  min-height: 2.5rem;
-  padding-inline: 0.9rem;
-  border-radius: 0.75rem;
-  color: #626d83;
-  font-weight: 750;
-  white-space: nowrap;
-}
-
-.study-day-tab.tab-active {
-  color: #fff;
-  background: linear-gradient(125deg, #7167ed, #5147cf);
-  box-shadow: 0 5px 14px rgb(98 88 232 / 18%);
-}
-
-.study-progress-status {
-  margin: 0;
-  color: #66728a;
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-
-.daily-plan-footer .btn {
-  flex: 0 0 auto;
 }
 
 .search-label {
@@ -919,25 +825,6 @@ input {
 
   .options {
     grid-template-columns: 1fr;
-  }
-
-  .daily-plan-header,
-  .daily-plan-footer {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .daily-count-control {
-    grid-template-columns: minmax(0, 1fr) 5.25rem;
-  }
-
-  .daily-count-control .search-label,
-  .daily-count-help {
-    text-align: left;
-  }
-
-  .daily-plan-footer .btn {
-    align-self: flex-start;
   }
 
   .score-chip {

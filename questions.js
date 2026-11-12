@@ -1,6 +1,6 @@
 // AI / IT 术语题库：题干和选项均提供中文、韩文和英文版本。
 // answer 是 options 数组的正确答案下标，从 0 开始计数。
-const questions = [
+const wordList = [
   {
     id: 1,
     term: "人工智能",
