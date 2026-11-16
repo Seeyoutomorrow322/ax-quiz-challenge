@@ -15,6 +15,29 @@ function safeSetItem(key, value) {
   }
 }
 
+function getStoredInteger(key) {
+  const value = Number(safeGetItem(key));
+  return Number.isSafeInteger(value) && value >= 0 ? value : 0;
+}
+
+function getStoredArray(key) {
+  const value = safeGetItem(key);
+  if (value === null) {
+    return [];
+  }
+
+  try {
+    const parsedValue = JSON.parse(value);
+    if (Array.isArray(parsedValue)) {
+      return parsedValue;
+    }
+  } catch (error) {
+    console.warn(`LocalStorage 中的 ${key} 数据格式无效。`, error);
+  }
+
+  return [];
+}
+
 let currentScore = 0; // 当前累计分数
 let currentQuestionIndex = 0; // 当前题目在本轮中的位置
 const TOTAL_QUESTIONS = 50;
@@ -22,16 +45,30 @@ const QUESTIONS_PER_ROUND = 10; // 每轮计划抽取的题目数量
 const POINTS_PER_QUESTION = 10; // 每题答对可得分数
 const MAX_SCORE = QUESTIONS_PER_ROUND * POINTS_PER_QUESTION;
 const HIGH_SCORE_STORAGE_KEY = "axQuizHighScore";
+const XP_STORAGE_KEY = "xp";
+const TOTAL_CORRECT_STORAGE_KEY = "totalCorrect";
+const BADGES_STORAGE_KEY = "badges";
+const HISTORY_STORAGE_KEY = "history";
 const DAILY_WORD_COUNT = 10;
+const ACHIEVEMENTS = {
+  first_round: { icon: "🌱" },
+  enthusiastic_learner: { icon: "🔥" },
+  master: { icon: "🏆" }
+};
 let currentLanguage = "zh";
 let currentLang = "zh";
 let currentQuiz = [];
+let totalXP = 0;
+let totalCorrectAnswers = 0;
+let currentRoundXP = 0;
+let currentRoundCorrect = 0;
 let isAnswerLocked = false;
 let currentFeedbackKey = "";
 let advanceTimeoutId = null;
 let isPageTransitioning = false;
 let currentStudyDay = 1;
 let isStudyDayTransitioning = false;
+const unlockedBadgesThisSession = new Set();
 
 const vocabularyList = [
   {
@@ -581,6 +618,14 @@ const translations = {
     },
     footer: {
       text: "AX Quiz Challenge · 项目结构与页面草图"
+    },
+    achievement: {
+      unlocked: "成就解锁！",
+      badges: {
+        first_round: "第一步",
+        enthusiastic_learner: "热情学习者",
+        master: "达人"
+      }
     }
   },
   ko: {
@@ -658,6 +703,14 @@ const translations = {
     },
     footer: {
       text: "AX Quiz Challenge · 프로젝트 구조와 페이지 스케치"
+    },
+    achievement: {
+      unlocked: "업적 달성！",
+      badges: {
+        first_round: "첫걸음",
+        enthusiastic_learner: "열정 학습자",
+        master: "달인"
+      }
     }
   },
   en: {
@@ -735,11 +788,116 @@ const translations = {
     },
     footer: {
       text: "AX Quiz Challenge · Project structure and page sketches"
+    },
+    achievement: {
+      unlocked: "Achievement Unlocked!",
+      badges: {
+        first_round: "First Step",
+        enthusiastic_learner: "Enthusiastic Learner",
+        master: "Master"
+      }
     }
   }
 };
 
 const LANGUAGE_STORAGE_KEY = "axQuizLanguage";
+
+function updateAchievementToastLanguage(toast) {
+  const achievementText = translations[currentLanguage].achievement;
+  const badgeKey = toast.dataset.badgeKey;
+  toast.querySelector(".achievement-toast-name").textContent =
+    achievementText.badges[badgeKey];
+  toast.querySelector(".achievement-toast-message").textContent =
+    achievementText.unlocked;
+}
+
+function updateVisibleAchievementToasts() {
+  document.querySelectorAll(".achievement-toast").forEach(updateAchievementToastLanguage);
+}
+
+function showAchievementToast(badgeKey) {
+  const toast = document.createElement("article");
+  const icon = document.createElement("span");
+  const copy = document.createElement("span");
+  const name = document.createElement("strong");
+  const message = document.createElement("span");
+
+  toast.className = "achievement-toast";
+  toast.dataset.badgeKey = badgeKey;
+  toast.setAttribute("role", "status");
+  icon.className = "achievement-toast-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = ACHIEVEMENTS[badgeKey].icon;
+  copy.className = "achievement-toast-copy";
+  name.className = "achievement-toast-name";
+  message.className = "achievement-toast-message";
+  copy.append(name, message);
+  toast.append(icon, copy);
+  updateAchievementToastLanguage(toast);
+  document.querySelector("#achievement-toast-container").append(toast);
+
+  window.setTimeout(() => {
+    toast.classList.add("is-leaving");
+    window.setTimeout(() => toast.remove(), 400);
+  }, 3400);
+}
+
+function unlockBadges(badgeKeys) {
+  const storedBadges = getStoredArray(BADGES_STORAGE_KEY)
+    .filter((badgeKey) => typeof badgeKey === "string");
+  const unlockedBadges = new Set(storedBadges);
+  const newBadges = badgeKeys.filter(
+    (badgeKey) => !unlockedBadges.has(badgeKey) && !unlockedBadgesThisSession.has(badgeKey)
+  );
+  if (newBadges.length === 0) {
+    return;
+  }
+
+  safeSetItem(BADGES_STORAGE_KEY, JSON.stringify([...unlockedBadges, ...newBadges]));
+  newBadges.forEach((badgeKey) => {
+    unlockedBadgesThisSession.add(badgeKey);
+    showAchievementToast(badgeKey);
+  });
+}
+
+function getLevelForXP(xp) {
+  if (xp >= 250) {
+    return 3;
+  }
+  return xp >= 100 ? 2 : 1;
+}
+
+function recordLearningProgress(isCorrect) {
+  const xpEarned = isCorrect ? 10 : 2;
+  totalXP += xpEarned;
+  currentRoundXP += xpEarned;
+  if (isCorrect) {
+    totalCorrectAnswers += 1;
+    currentRoundCorrect += 1;
+  }
+  safeSetItem(XP_STORAGE_KEY, String(totalXP));
+  safeSetItem(TOTAL_CORRECT_STORAGE_KEY, String(totalCorrectAnswers));
+
+  const earnedBadges = [];
+  if (totalCorrectAnswers >= 20) {
+    earnedBadges.push("enthusiastic_learner");
+  }
+  if (getLevelForXP(totalXP) >= 3) {
+    earnedBadges.push("master");
+  }
+  unlockBadges(earnedBadges);
+}
+
+function saveStudyHistory() {
+  const history = getStoredArray(HISTORY_STORAGE_KEY);
+  history.push({
+    score: currentScore,
+    correct: currentRoundCorrect,
+    xp: currentRoundXP,
+    completedAt: new Date().toISOString()
+  });
+  safeSetItem(HISTORY_STORAGE_KEY, JSON.stringify(history.slice(-5)));
+}
 
 // 切换界面语言并保存选择；输入语言代码，更新页面文字和按钮状态，无返回值。
 function switchLanguage(lang) {
@@ -798,6 +956,7 @@ function switchLanguage(lang) {
   document.querySelector("#speech-status").textContent = "";
   updateCurrentQuestionLanguage();
   updateDynamicLabels();
+  updateVisibleAchievementToasts();
 }
 
 // 按当前学习日渲染词语表。
@@ -1193,6 +1352,7 @@ function checkAnswer(selectedAnswer, question) {
     currentScore += POINTS_PER_QUESTION;
     saveHighScoreIfNeeded(currentScore);
   }
+  recordLearningProgress(isCorrect);
   return isCorrect;
 }
 
@@ -1283,6 +1443,8 @@ function saveHighScoreIfNeeded(score) {
 // 完成本轮后将新纪录写入 Local Storage 并显示成绩页面；无输入与返回值。
 function showScore() {
   saveHighScoreIfNeeded(currentScore);
+  saveStudyHistory();
+  unlockBadges(["first_round"]);
   document.querySelector(".result-score").firstChild.nodeValue = String(currentScore);
   document.querySelector(".result-note").lastChild.nodeValue = `: ${getHighScore()}`;
   currentQuiz = [];
@@ -1465,6 +1627,8 @@ function startGame(animate = false) {
   currentQuiz = newRoundQuestions;
   currentScore = 0;
   currentQuestionIndex = 0;
+  currentRoundXP = 0;
+  currentRoundCorrect = 0;
   currentFeedbackKey = "";
   isAnswerLocked = false;
   showPage("quiz-page", animate);
@@ -1483,6 +1647,8 @@ function handleStartButtonClick() {
 
 // 初始化页面状态、最高分显示和按钮事件；无输入与返回值。
 function initializeGame() {
+  totalXP = getStoredInteger(XP_STORAGE_KEY);
+  totalCorrectAnswers = getStoredInteger(TOTAL_CORRECT_STORAGE_KEY);
   const rawHighScore = safeGetItem(HIGH_SCORE_STORAGE_KEY);
   console.log("读取到的原始数据：", rawHighScore);
 
