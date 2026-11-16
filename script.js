@@ -1,4 +1,20 @@
 // 游戏状态：记录当前分数、题号和本轮抽中的题目。
+function safeGetItem(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn(`无法写入 LocalStorage（${key}）。`, error);
+  }
+}
+
 let currentScore = 0; // 当前累计分数
 let currentQuestionIndex = 0; // 当前题目在本轮中的位置
 const TOTAL_QUESTIONS = 50;
@@ -777,7 +793,7 @@ function switchLanguage(lang) {
     button.setAttribute("aria-pressed", String(isActive));
   });
 
-  localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  safeSetItem(LANGUAGE_STORAGE_KEY, lang);
   renderVocabulary();
   document.querySelector("#speech-status").textContent = "";
   updateCurrentQuestionLanguage();
@@ -1226,7 +1242,7 @@ function advanceToNextQuestion() {
 
 // 从 Local Storage 读取有效最高分；未保存或数据无效时返回 0。
 function getHighScore() {
-  const savedValue = localStorage.getItem(HIGH_SCORE_STORAGE_KEY);
+  const savedValue = safeGetItem(HIGH_SCORE_STORAGE_KEY);
   if (savedValue === null) {
     return 0;
   }
@@ -1258,7 +1274,7 @@ function renderHighScore(currentHighScore = getHighScore()) {
 function saveHighScoreIfNeeded(score) {
   const highScore = getHighScore();
   if (score > highScore) {
-    localStorage.setItem(HIGH_SCORE_STORAGE_KEY, String(score));
+    safeSetItem(HIGH_SCORE_STORAGE_KEY, String(score));
     return score;
   }
   return highScore;
@@ -1467,7 +1483,7 @@ function handleStartButtonClick() {
 
 // 初始化页面状态、最高分显示和按钮事件；无输入与返回值。
 function initializeGame() {
-  const rawHighScore = localStorage.getItem(HIGH_SCORE_STORAGE_KEY);
+  const rawHighScore = safeGetItem(HIGH_SCORE_STORAGE_KEY);
   console.log("读取到的原始数据：", rawHighScore);
 
   const currentHighScore = getHighScore();
@@ -1489,7 +1505,7 @@ function initializeGame() {
     handleStartButtonClick
   );
 
-  const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const savedLanguage = safeGetItem(LANGUAGE_STORAGE_KEY);
   switchLanguage(savedLanguage && translations[savedLanguage] ? savedLanguage : "zh");
   renderHighScore(currentHighScore);
 }

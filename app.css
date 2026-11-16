@@ -17,12 +17,12 @@
 }
 
 html {
-  min-width: 320px;
+  min-width: 0;
   scroll-behavior: smooth;
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0;
   color: #17233c;
@@ -820,7 +820,6 @@ input {
 
   .language-switcher {
     align-self: flex-end;
-    margin-top: -3rem;
   }
 
   .options {
@@ -829,5 +828,12 @@ input {
 
   .score-chip {
     font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 }
