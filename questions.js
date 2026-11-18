@@ -4,6 +4,7 @@ const wordList = [
   {
     id: 1,
     term: "人工智能",
+    difficulty: "简单",
     korean: "인공지능",
     term_en: "Artificial Intelligence",
     description: "让计算机执行通常需要人类智能才能完成的任务。",
@@ -28,6 +29,7 @@ const wordList = [
   {
     id: 2,
     term: "机器学习",
+    difficulty: "普通",
     korean: "기계 학습",
     term_en: "Machine Learning",
     description: "通过数据训练模型，使计算机能够从经验中改进任务表现。",
@@ -52,6 +54,7 @@ const wordList = [
   {
     id: 3,
     term: "深度学习",
+    difficulty: "普通",
     korean: "딥 러닝",
     term_en: "Deep Learning",
     description: "使用多层神经网络学习数据中的复杂特征。",
@@ -76,6 +79,7 @@ const wordList = [
   {
     id: 4,
     term: "神经网络",
+    difficulty: "困难",
     korean: "신경망",
     term_en: "Neural Network",
     description: "由相互连接的计算节点组成，用于学习数据模式的模型。",
@@ -100,6 +104,7 @@ const wordList = [
   {
     id: 5,
     term: "大语言模型",
+    difficulty: "普通",
     korean: "대규모 언어 모델",
     term_en: "Large Language Model",
     description: "能够理解并生成人类语言的强大 AI 模型。",
@@ -124,6 +129,7 @@ const wordList = [
   {
     id: 6,
     term: "生成式人工智能",
+    difficulty: "简单",
     korean: "생성형 인공지능",
     term_en: "Generative AI",
     description: "根据输入生成文本、图像、音频等新内容的人工智能。",
@@ -148,6 +154,7 @@ const wordList = [
   {
     id: 7,
     term: "自然语言处理",
+    difficulty: "普通",
     korean: "자연어 처리",
     term_en: "Natural Language Processing",
     description: "帮助计算机分析、理解和生成人类语言的技术领域。",
@@ -172,6 +179,7 @@ const wordList = [
   {
     id: 8,
     term: "计算机视觉",
+    difficulty: "普通",
     korean: "컴퓨터 비전",
     term_en: "Computer Vision",
     description: "让计算机从图像和视频中提取信息并理解内容。",
@@ -196,6 +204,7 @@ const wordList = [
   {
     id: 9,
     term: "提示词",
+    difficulty: "简单",
     korean: "프롬프트",
     term_en: "Prompt",
     description: "用户输入给 AI、用于引导其生成结果的指令或内容。",
@@ -220,6 +229,7 @@ const wordList = [
   {
     id: 10,
     term: "智能体",
+    difficulty: "普通",
     korean: "지능형 에이전트",
     term_en: "AI Agent",
     description: "能够感知环境、规划步骤并调用工具完成任务的 AI 程序。",
@@ -244,6 +254,7 @@ const wordList = [
   {
     id: 11,
     term: "检索增强生成",
+    difficulty: "普通",
     korean: "검색 증강 생성",
     term_en: "Retrieval-Augmented Generation",
     description: "先检索外部知识，再结合检索内容生成答案的方法。",
@@ -268,6 +279,7 @@ const wordList = [
   {
     id: 12,
     term: "多模态",
+    difficulty: "简单",
     korean: "멀티모달",
     term_en: "Multimodal",
     description: "能够处理或结合文本、图像、音频等多种数据形式。",
@@ -292,6 +304,7 @@ const wordList = [
   {
     id: 13,
     term: "数据库",
+    difficulty: "简单",
     korean: "데이터베이스",
     term_en: "Database",
     description: "用于有序存储、管理和查询数据的软件系统。",
@@ -316,6 +329,7 @@ const wordList = [
   {
     id: 14,
     term: "应用程序接口",
+    difficulty: "简单",
     korean: "응용 프로그래밍 인터페이스",
     term_en: "Application Programming Interface",
     description: "定义软件系统之间如何请求功能和交换数据的接口。",
@@ -340,6 +354,7 @@ const wordList = [
   {
     id: 15,
     term: "前端",
+    difficulty: "简单",
     korean: "프런트엔드",
     term_en: "Frontend",
     description: "网站或应用中用户直接看到并进行交互的部分。",
@@ -364,6 +379,7 @@ const wordList = [
   {
     id: 16,
     term: "后端",
+    difficulty: "简单",
     korean: "백엔드",
     term_en: "Backend",
     description: "负责服务器端业务逻辑、数据处理和存储的部分。",
@@ -388,6 +404,7 @@ const wordList = [
   {
     id: 17,
     term: "云计算",
+    difficulty: "简单",
     korean: "클라우드 컴퓨팅",
     term_en: "Cloud Computing",
     description: "通过互联网按需提供服务器、存储和计算能力。",
@@ -412,6 +429,7 @@ const wordList = [
   {
     id: 18,
     term: "物联网",
+    difficulty: "普通",
     korean: "사물 인터넷",
     term_en: "Internet of Things",
     description: "让实体设备连接网络并收集、交换数据的技术体系。",
@@ -436,6 +454,7 @@ const wordList = [
   {
     id: 19,
     term: "边缘计算",
+    difficulty: "普通",
     korean: "에지 컴퓨팅",
     term_en: "Edge Computing",
     description: "在靠近数据来源的位置处理数据，以减少延迟和传输量。",
@@ -460,6 +479,7 @@ const wordList = [
   {
     id: 20,
     term: "版本管理",
+    difficulty: "简单",
     korean: "버전 관리",
     term_en: "Version Control",
     description: "记录和管理文件或源代码随时间发生的修改。",

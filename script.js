@@ -46,6 +46,9 @@ const POINTS_PER_QUESTION = 10; // 每题答对可得分数
 const MAX_SCORE = QUESTIONS_PER_ROUND * POINTS_PER_QUESTION;
 const HIGH_SCORE_STORAGE_KEY = "axQuizHighScore";
 const XP_STORAGE_KEY = "xp";
+const AVATAR_STORAGE_KEY = "avatarImage";
+const AVATAR_FRAME_STORAGE_KEY = "avatarFrame";
+const MAX_USER_LEVEL = 10;
 const TOTAL_CORRECT_STORAGE_KEY = "totalCorrect";
 const BADGES_STORAGE_KEY = "badges";
 const HISTORY_STORAGE_KEY = "history";
@@ -53,13 +56,22 @@ const DAILY_WORD_COUNT = 10;
 const ACHIEVEMENTS = {
   first_round: { icon: "🌱" },
   enthusiastic_learner: { icon: "🔥" },
-  master: { icon: "🏆" }
+  master: { icon: "🏆" },
+  bronze_scholar: { icon: "🥉" },
+  gold_champion: { icon: "🏆" }
 };
 let currentLanguage = "zh";
 let currentLang = "zh";
 let currentQuiz = [];
+let selectedDifficulty = "normal";
+let combo = 0;
 let totalXP = 0;
 let totalCorrectAnswers = 0;
+let userAvatarData = "";
+let selectedAvatarFrame = 1;
+let draftAvatarData = "";
+let draftAvatarFrame = 1;
+let userCenterStatusKey = "";
 let currentRoundXP = 0;
 let currentRoundCorrect = 0;
 let isAnswerLocked = false;
@@ -72,7 +84,7 @@ const unlockedBadgesThisSession = new Set();
 
 const vocabularyList = [
   {
-    term: "强化学习", korean: "강화 학습", term_en: "Reinforcement Learning",
+    term: "强化学习", korean: "강화 학습", term_en: "Reinforcement Learning", difficulty: "困难",
     description: "智能体通过与环境交互，并依据奖励或惩罚信号来学习行动策略的方法。",
     explanation: {
       zh: "智能体通过与环境交互，并依据奖励或惩罚信号来学习行动策略的方法。",
@@ -81,7 +93,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "监督学习", korean: "지도 학습", term_en: "Supervised Learning",
+    term: "监督学习", korean: "지도 학습", term_en: "Supervised Learning", difficulty: "普通",
     description: "使用带有正确答案标签的数据训练模型，使其学习输入与目标输出之间关系的方法。",
     explanation: {
       zh: "使用带有正确答案标签的数据训练模型，使其学习输入与目标输出之间关系的方法。",
@@ -90,7 +102,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "无监督学习", korean: "비지도 학습", term_en: "Unsupervised Learning",
+    term: "无监督学习", korean: "비지도 학습", term_en: "Unsupervised Learning", difficulty: "普通",
     description: "使用没有预先标注结果的数据，发现数据中的结构、类别或规律的方法。",
     explanation: {
       zh: "使用没有预先标注结果的数据，发现数据中的结构、类别或规律的方法。",
@@ -99,7 +111,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "半监督学习", korean: "준지도 학습", term_en: "Semi-supervised Learning",
+    term: "半监督学习", korean: "준지도 학습", term_en: "Semi-supervised Learning", difficulty: "普通",
     description: "结合少量带标签数据和大量未标注数据训练模型的方法。",
     explanation: {
       zh: "结合少量带标签数据和大量未标注数据训练模型的方法。",
@@ -108,7 +120,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "迁移学习", korean: "전이 학습", term_en: "Transfer Learning",
+    term: "迁移学习", korean: "전이 학습", term_en: "Transfer Learning", difficulty: "普通",
     description: "将模型在一个任务或数据集上学到的知识迁移到相关新任务中的方法。",
     explanation: {
       zh: "将模型在一个任务或数据集上学到的知识迁移到相关新任务中的方法。",
@@ -117,7 +129,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "联邦学习", korean: "연합 학습", term_en: "Federated Learning",
+    term: "联邦学习", korean: "연합 학습", term_en: "Federated Learning", difficulty: "困难",
     description: "在数据保留于本地设备或机构的情况下协同训练模型的方法。",
     explanation: {
       zh: "在数据保留于本地设备或机构的情况下协同训练模型的方法。",
@@ -126,7 +138,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "特征工程", korean: "특성 공학", term_en: "Feature Engineering",
+    term: "特征工程", korean: "특성 공학", term_en: "Feature Engineering", difficulty: "普通",
     description: "从原始数据中选择、转换或构造适合模型使用的特征的过程。",
     explanation: {
       zh: "从原始数据中选择、转换或构造适合模型使用的特征的过程。",
@@ -135,7 +147,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "训练集", korean: "훈련 데이터셋", term_en: "Training Set",
+    term: "训练集", korean: "훈련 데이터셋", term_en: "Training Set", difficulty: "简单",
     description: "用于训练模型并调整模型参数的数据集合。",
     explanation: {
       zh: "用于训练模型并调整模型参数的数据集合。",
@@ -144,7 +156,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "验证集", korean: "검증 데이터셋", term_en: "Validation Set",
+    term: "验证集", korean: "검증 데이터셋", term_en: "Validation Set", difficulty: "简单",
     description: "用于评估训练过程、选择模型或调整超参数的数据集合。",
     explanation: {
       zh: "用于评估训练过程、选择模型或调整超参数的数据集合。",
@@ -153,7 +165,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "测试集", korean: "테스트 데이터셋", term_en: "Test Set",
+    term: "测试集", korean: "테스트 데이터셋", term_en: "Test Set", difficulty: "简单",
     description: "用于在训练完成后评估模型对未见数据的泛化表现的数据集合。",
     explanation: {
       zh: "用于在训练完成后评估模型对未见数据的泛化表现的数据集合。",
@@ -162,7 +174,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "过拟合", korean: "과적합", term_en: "Overfitting",
+    term: "过拟合", korean: "과적합", term_en: "Overfitting", difficulty: "普通",
     description: "模型过度适应训练数据中的细节或噪声，导致对新数据表现变差的现象。",
     explanation: {
       zh: "模型过度适应训练数据中的细节或噪声，导致对新数据表现变差的现象。",
@@ -171,7 +183,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "欠拟合", korean: "과소적합", term_en: "Underfitting",
+    term: "欠拟合", korean: "과소적합", term_en: "Underfitting", difficulty: "普通",
     description: "模型复杂度或训练不足以捕捉数据中的主要规律，导致训练和测试表现都较差的现象。",
     explanation: {
       zh: "模型复杂度或训练不足以捕捉数据中的主要规律，导致训练和测试表现都较差的现象。",
@@ -180,7 +192,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "梯度下降", korean: "경사 하강법", term_en: "Gradient Descent",
+    term: "梯度下降", korean: "경사 하강법", term_en: "Gradient Descent", difficulty: "困难",
     description: "通过沿着损失函数梯度的反方向更新参数，以逐步降低模型误差的优化方法。",
     explanation: {
       zh: "通过沿着损失函数梯度的反方向更新参数，以逐步降低模型误差的优化方法。",
@@ -189,7 +201,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "反向传播", korean: "역전파", term_en: "Backpropagation",
+    term: "反向传播", korean: "역전파", term_en: "Backpropagation", difficulty: "困难",
     description: "在神经网络中将误差信号从输出层向前传递，用于计算各参数梯度的算法。",
     explanation: {
       zh: "在神经网络中将误差信号从输出层向前传递，用于计算各参数梯度的算法。",
@@ -198,7 +210,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "损失函数", korean: "손실 함수", term_en: "Loss Function",
+    term: "损失函数", korean: "손실 함수", term_en: "Loss Function", difficulty: "普通",
     description: "衡量模型预测结果与目标结果之间差异的函数，通常用于指导模型训练。",
     explanation: {
       zh: "衡量模型预测结果与目标结果之间差异的函数，通常用于指导模型训练。",
@@ -207,7 +219,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "优化器", korean: "최적화 알고리즘", term_en: "Optimizer",
+    term: "优化器", korean: "최적화 알고리즘", term_en: "Optimizer", difficulty: "普通",
     description: "根据梯度更新模型参数，以减少损失函数值的算法或训练组件。",
     explanation: {
       zh: "根据梯度更新模型参数，以减少损失函数值的算法或训练组件。",
@@ -216,7 +228,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "卷积神经网络", korean: "합성곱 신경망", term_en: "Convolutional Neural Network (CNN)",
+    term: "卷积神经网络", korean: "합성곱 신경망", term_en: "Convolutional Neural Network (CNN)", difficulty: "困难",
     description: "使用卷积运算提取局部特征，常用于图像识别和视觉任务的神经网络。",
     explanation: {
       zh: "使用卷积运算提取局部特征，常用于图像识别和视觉任务的神经网络。",
@@ -225,7 +237,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "循环神经网络", korean: "순환 신경망", term_en: "Recurrent Neural Network (RNN)",
+    term: "循环神经网络", korean: "순환 신경망", term_en: "Recurrent Neural Network (RNN)", difficulty: "困难",
     description: "通过循环结构处理序列信息，适用于文本、语音等时序数据的神经网络。",
     explanation: {
       zh: "通过循环结构处理序列信息，适用于文本、语音等时序数据的神经网络。",
@@ -234,7 +246,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "Transformer", korean: "트랜스포머", term_en: "Transformer",
+    term: "Transformer", korean: "트랜스포머", term_en: "Transformer", difficulty: "困难",
     description: "以注意力机制为核心的神经网络架构，广泛用于自然语言处理和多模态任务。",
     explanation: {
       zh: "以注意力机制为核心的神经网络架构，广泛用于自然语言处理和多模态任务。",
@@ -243,7 +255,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "注意力机制", korean: "어텐션 메커니즘", term_en: "Attention Mechanism",
+    term: "注意力机制", korean: "어텐션 메커니즘", term_en: "Attention Mechanism", difficulty: "困难",
     description: "让模型根据当前任务需要，为输入中的不同部分分配不同关注权重的机制。",
     explanation: {
       zh: "让模型根据当前任务需要，为输入中的不同部分分配不同关注权重的机制。",
@@ -252,7 +264,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "分词", korean: "토큰화", term_en: "Tokenization",
+    term: "分词", korean: "토큰화", term_en: "Tokenization", difficulty: "普通",
     description: "将文本拆分为词、子词或其他基本单元，供语言模型处理的过程。",
     explanation: {
       zh: "将文本拆分为词、子词或其他基本单元，供语言模型处理的过程。",
@@ -261,7 +273,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "词嵌入", korean: "단어 임베딩", term_en: "Word Embedding",
+    term: "词嵌入", korean: "단어 임베딩", term_en: "Word Embedding", difficulty: "困难",
     description: "将词语表示为数值向量，使模型能够处理词语及其语义关系的方法。",
     explanation: {
       zh: "将词语表示为数值向量，使模型能够处理词语及其语义关系的方法。",
@@ -270,7 +282,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "向量数据库", korean: "벡터 데이터베이스", term_en: "Vector Database",
+    term: "向量数据库", korean: "벡터 데이터베이스", term_en: "Vector Database", difficulty: "普通",
     description: "用于存储向量并按相似度进行检索的数据库，常用于语义搜索和检索增强生成。",
     explanation: {
       zh: "用于存储向量并按相似度进行检索的数据库，常用于语义搜索和检索增强生成。",
@@ -279,7 +291,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "微调", korean: "파인 튜닝", term_en: "Fine-tuning",
+    term: "微调", korean: "파인튜닝", term_en: "Fine-tuning", difficulty: "普通",
     description: "在预训练模型基础上使用特定任务或领域的数据继续训练，以适配新用途的过程。",
     explanation: {
       zh: "在预训练模型基础上使用特定任务或领域的数据继续训练，以适配新用途的过程。",
@@ -288,7 +300,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "量化", korean: "양자화", term_en: "Quantization",
+    term: "量化", korean: "양자화", term_en: "Quantization", difficulty: "困难",
     description: "使用较低精度表示模型参数或计算结果，以减少模型占用空间和推理成本的技术。",
     explanation: {
       zh: "使用较低精度表示模型参数或计算结果，以减少模型占用空间和推理成本的技术。",
@@ -297,7 +309,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "知识蒸馏", korean: "지식 증류", term_en: "Knowledge Distillation",
+    term: "知识蒸馏", korean: "지식 증류", term_en: "Knowledge Distillation", difficulty: "困难",
     description: "将较大教师模型学到的知识迁移到较小学生模型中的模型压缩方法。",
     explanation: {
       zh: "将较大教师模型学到的知识迁移到较小学生模型中的模型压缩方法。",
@@ -306,7 +318,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "上下文窗口", korean: "컨텍스트 윈도우", term_en: "Context Window",
+    term: "上下文窗口", korean: "컨텍스트 윈도우", term_en: "Context Window", difficulty: "普通",
     description: "语言模型在一次处理或生成过程中能够参考的输入信息范围。",
     explanation: {
       zh: "语言模型在一次处理或生成过程中能够参考的输入信息范围。",
@@ -315,7 +327,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "模型推理", korean: "모델 추론", term_en: "Model Inference",
+    term: "模型推理", korean: "모델 추론", term_en: "Model Inference", difficulty: "普通",
     description: "使用已训练模型对新输入执行预测、分类或内容生成的过程。",
     explanation: {
       zh: "使用已训练模型对新输入执行预测、分类或内容生成的过程。",
@@ -324,7 +336,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "AI 幻觉", korean: "AI 환각", term_en: "AI Hallucination",
+    term: "AI 幻觉", korean: "AI 환각", term_en: "AI Hallucination", difficulty: "普通",
     description: "生成式模型产生看似合理、但与事实不符或缺乏依据内容的现象。",
     explanation: {
       zh: "生成式模型产生看似合理、但与事实不符或缺乏依据内容的现象。",
@@ -333,7 +345,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "系统提示词", korean: "시스템 프롬프트", term_en: "System Prompt",
+    term: "系统提示词", korean: "시스템 프롬프트", term_en: "System Prompt", difficulty: "简单",
     description: "用于设定 AI 助手角色、行为规则和回答约束的初始指令。",
     explanation: {
       zh: "用于设定 AI 助手角色、行为规则和回答约束的初始指令。",
@@ -342,7 +354,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "超文本标记语言", korean: "하이퍼텍스트 마크업 언어", term_en: "HyperText Markup Language (HTML)",
+    term: "超文本标记语言", korean: "하이퍼텍스트 마크업 언어", term_en: "HyperText Markup Language (HTML)", difficulty: "简单",
     description: "用于描述网页结构和内容的标记语言。",
     explanation: {
       zh: "用于描述网页结构和内容的标记语言。",
@@ -351,7 +363,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "层叠样式表", korean: "캐스케이딩 스타일 시트", term_en: "Cascading Style Sheets (CSS)",
+    term: "层叠样式表", korean: "캐스케이딩 스타일 시트", term_en: "Cascading Style Sheets (CSS)", difficulty: "简单",
     description: "用于控制网页布局、颜色、字体和响应式显示效果的样式语言。",
     explanation: {
       zh: "用于控制网页布局、颜色、字体和响应式显示效果的样式语言。",
@@ -360,7 +372,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "JavaScript", korean: "자바스크립트", term_en: "JavaScript",
+    term: "JavaScript", korean: "자바스크립트", term_en: "JavaScript", difficulty: "简单",
     description: "常用于实现网页交互、动态内容和服务端应用的编程语言。",
     explanation: {
       zh: "常用于实现网页交互、动态内容和服务端应用的编程语言。",
@@ -369,7 +381,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "文档对象模型", korean: "문서 객체 모델", term_en: "Document Object Model (DOM)",
+    term: "文档对象模型", korean: "문서 객체 모델", term_en: "Document Object Model (DOM)", difficulty: "简单",
     description: "浏览器将 HTML 文档表示为可由脚本读取和修改的节点树结构。",
     explanation: {
       zh: "浏览器将 HTML 文档表示为可由脚本读取和修改的节点树结构。",
@@ -378,7 +390,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "响应式网页设计", korean: "반응형 웹 디자인", term_en: "Responsive Web Design",
+    term: "响应式网页设计", korean: "반응형 웹 디자인", term_en: "Responsive Web Design", difficulty: "简单",
     description: "使网页布局能够根据屏幕尺寸和设备特征自动适配的设计方法。",
     explanation: {
       zh: "使网页布局能够根据屏幕尺寸和设备特征自动适配的设计方法。",
@@ -387,7 +399,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "单页应用", korean: "싱글 페이지 애플리케이션", term_en: "Single-Page Application (SPA)",
+    term: "单页应用", korean: "싱글 페이지 애플리케이션", term_en: "Single-Page Application (SPA)", difficulty: "普通",
     description: "主要通过客户端动态更新页面内容，减少整页重新加载的 Web 应用。",
     explanation: {
       zh: "主要通过客户端动态更新页面内容，减少整页重新加载的 Web 应用。",
@@ -396,7 +408,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "服务端渲染", korean: "서버 사이드 렌더링", term_en: "Server-Side Rendering (SSR)",
+    term: "服务端渲染", korean: "서버 사이드 렌더링", term_en: "Server-Side Rendering (SSR)", difficulty: "普通",
     description: "由服务器生成网页 HTML 后发送给浏览器的渲染方式。",
     explanation: {
       zh: "由服务器生成网页 HTML 后发送给浏览器的渲染方式。",
@@ -405,7 +417,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "Node.js", korean: "노드.js", term_en: "Node.js",
+    term: "Node.js", korean: "노드.js", term_en: "Node.js", difficulty: "简单",
     description: "基于 V8 引擎的 JavaScript 运行环境，可用于构建服务端和命令行应用。",
     explanation: {
       zh: "基于 V8 引擎的 JavaScript 运行环境，可用于构建服务端和命令行应用。",
@@ -414,7 +426,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "微服务", korean: "마이크로서비스", term_en: "Microservices",
+    term: "微服务", korean: "마이크로서비스", term_en: "Microservices", difficulty: "普通",
     description: "将应用拆分为多个可独立开发、部署和扩展的小型服务的架构风格。",
     explanation: {
       zh: "将应用拆分为多个可独立开发、部署和扩展的小型服务的架构风格。",
@@ -423,7 +435,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "REST API", korean: "REST API", term_en: "REST API",
+    term: "REST API", korean: "REST API", term_en: "REST API", difficulty: "普通",
     description: "遵循 REST 架构约束，通常通过 HTTP 资源和方法提供服务接口的设计方式。",
     explanation: {
       zh: "遵循 REST 架构约束，通常通过 HTTP 资源和方法提供服务接口的设计方式。",
@@ -432,7 +444,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "GraphQL", korean: "그래프QL", term_en: "GraphQL",
+    term: "GraphQL", korean: "그래프QL", term_en: "GraphQL", difficulty: "普通",
     description: "一种 API 查询语言和运行时，客户端可声明所需的数据字段。",
     explanation: {
       zh: "一种 API 查询语言和运行时，客户端可声明所需的数据字段。",
@@ -441,7 +453,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "结构化查询语言", korean: "구조화 질의 언어", term_en: "Structured Query Language (SQL)",
+    term: "结构化查询语言", korean: "구조화 질의 언어", term_en: "Structured Query Language (SQL)", difficulty: "普通",
     description: "用于定义、查询和操作关系型数据库中数据的语言。",
     explanation: {
       zh: "用于定义、查询和操作关系型数据库中数据的语言。",
@@ -450,7 +462,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "缓存", korean: "캐시", term_en: "Cache",
+    term: "缓存", korean: "캐시", term_en: "Cache", difficulty: "简单",
     description: "将常用数据暂存于更快的存储位置，以减少重复计算或访问延迟的技术。",
     explanation: {
       zh: "将常用数据暂存于更快的存储位置，以减少重复计算或访问延迟的技术。",
@@ -459,7 +471,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "超文本传输协议", korean: "하이퍼텍스트 전송 프로토콜", term_en: "HyperText Transfer Protocol (HTTP)",
+    term: "超文本传输协议", korean: "하이퍼텍스트 전송 프로토콜", term_en: "HyperText Transfer Protocol (HTTP)", difficulty: "简单",
     description: "浏览器与 Web 服务器之间传输网页及相关资源时常用的应用层协议。",
     explanation: {
       zh: "浏览器与 Web 服务器之间传输网页及相关资源时常用的应用层协议。",
@@ -468,7 +480,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "域名系统", korean: "도메인 네임 시스템", term_en: "Domain Name System (DNS)",
+    term: "域名系统", korean: "도메인 네임 시스템", term_en: "Domain Name System (DNS)", difficulty: "普通",
     description: "将域名解析为 IP 地址等网络信息的分布式命名系统。",
     explanation: {
       zh: "将域名解析为 IP 地址等网络信息的分布式命名系统。",
@@ -477,7 +489,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "IP 地址", korean: "IP 주소", term_en: "IP Address",
+    term: "IP 地址", korean: "IP 주소", term_en: "IP Address", difficulty: "简单",
     description: "用于标识 IP 网络中设备或网络接口的逻辑地址。",
     explanation: {
       zh: "用于标识 IP 网络中设备或网络接口的逻辑地址。",
@@ -486,7 +498,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "传输控制协议", korean: "전송 제어 프로토콜", term_en: "Transmission Control Protocol (TCP)",
+    term: "传输控制协议", korean: "전송 제어 프로토콜", term_en: "Transmission Control Protocol (TCP)", difficulty: "普通",
     description: "提供可靠、有序数据传输的传输层协议。",
     explanation: {
       zh: "提供可靠、有序数据传输的传输层协议。",
@@ -495,7 +507,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "传输层安全协议", korean: "전송 계층 보안", term_en: "Transport Layer Security (TLS)",
+    term: "传输层安全协议", korean: "전송 계층 보안", term_en: "Transport Layer Security (TLS)", difficulty: "普通",
     description: "用于保护网络通信机密性和完整性的加密协议，常用于 HTTPS。",
     explanation: {
       zh: "用于保护网络通信机密性和完整性的加密协议，常用于 HTTPS。",
@@ -504,7 +516,7 @@ const vocabularyList = [
     }
   },
   {
-    term: "负载均衡", korean: "로드 밸런싱", term_en: "Load Balancing",
+    term: "负载均衡", korean: "로드 밸런싱", term_en: "Load Balancing", difficulty: "普通",
     description: "将网络请求分配到多个服务器或资源，以提升可用性和处理能力的技术。",
     explanation: {
       zh: "将网络请求分配到多个服务器或资源，以提升可用性和处理能力的技术。",
@@ -513,16 +525,179 @@ const vocabularyList = [
     }
   },
   {
-    term: "内容分发网络", korean: "콘텐츠 전송 네트워크", term_en: "Content Delivery Network (CDN)",
+    term: "内容分发网络", korean: "콘텐츠 전송 네트워크", term_en: "Content Delivery Network (CDN)", difficulty: "普通",
     description: "通过分布在多个位置的服务器缓存并交付内容，以降低访问延迟的网络服务。",
     explanation: {
       zh: "通过分布在多个位置的服务器缓存并交付内容，以降低访问延迟的网络服务。",
       ko: "여러 위치에 분산된 서버에 콘텐츠를 캐시하고 전달해 사용자 접근 지연을 줄이는 네트워크 서비스입니다.",
       en: "A network service that caches and delivers content from distributed servers to reduce access latency."
     }
+  },
+  {
+    term: "人工智能", korean: "인공지능", term_en: "Artificial Intelligence", difficulty: "简单",
+    description: "让计算机执行通常需要人类智能才能完成的任务的技术。",
+    explanation: {
+      zh: "让计算机执行通常需要人类智能才能完成的任务的技术。",
+      ko: "일반적으로 인간의 지능이 필요한 작업을 컴퓨터가 수행하도록 하는 기술입니다.",
+      en: "Technology that enables computers to perform tasks that typically require human intelligence."
+    }
+  },
+  {
+    term: "模型", korean: "모델", term_en: "Model", difficulty: "简单",
+    description: "从数据中学习规律，并用于生成内容或完成预测的计算系统。",
+    explanation: {
+      zh: "从数据中学习规律，并用于生成内容或完成预测的计算系统。",
+      ko: "데이터에서 패턴을 학습해 콘텐츠를 생성하거나 예측을 수행하는 컴퓨팅 시스템입니다.",
+      en: "A computational system that learns patterns from data to generate content or make predictions."
+    }
+  },
+  {
+    term: "上下文", korean: "컨텍스트", term_en: "Context", difficulty: "简单",
+    description: "帮助 AI 理解当前问题或指令的相关信息。",
+    explanation: {
+      zh: "帮助 AI 理解当前问题或指令的相关信息。",
+      ko: "AI가 현재 질문이나 지시를 이해하는 데 도움이 되는 관련 정보입니다.",
+      en: "Relevant information that helps AI understand the current question or instruction."
+    }
+  },
+  {
+    term: "提示词", korean: "프롬프트", term_en: "Prompt", difficulty: "简单",
+    description: "用户提供给 AI 的问题、指令或输入内容。",
+    explanation: {
+      zh: "用户提供给 AI 的问题、指令或输入内容。",
+      ko: "사용자가 AI에 제공하는 질문, 지시 또는 입력 내용입니다.",
+      en: "A question, instruction, or input provided by a user to an AI system."
+    }
+  },
+  {
+    term: "多模态", korean: "멀티모달", term_en: "Multimodal", difficulty: "简单",
+    description: "能够处理或生成文本、图像、音频等多种类型信息的能力。",
+    explanation: {
+      zh: "能够处理或生成文本、图像、音频等多种类型信息的能力。",
+      ko: "텍스트, 이미지, 오디오 등 여러 종류의 정보를 처리하거나 생성하는 능력입니다.",
+      en: "The ability to process or generate multiple types of information, such as text, images, and audio."
+    }
+  },
+  {
+    term: "AI 助手", korean: "AI 어시스턴트", term_en: "AI Assistant", difficulty: "简单",
+    description: "根据用户请求提供信息、建议或任务协助的 AI 应用。",
+    explanation: {
+      zh: "根据用户请求提供信息、建议或任务协助的 AI 应用。",
+      ko: "사용자의 요청에 따라 정보와 제안을 제공하거나 작업을 돕는 AI 애플리케이션입니다.",
+      en: "An AI application that provides information, suggestions, or task assistance in response to user requests."
+    }
+  },
+  {
+    term: "聊天机器人", korean: "챗봇", term_en: "Chatbot", difficulty: "简单",
+    description: "通过文字或语音与用户进行对话的程序。",
+    explanation: {
+      zh: "通过文字或语音与用户进行对话的程序。",
+      ko: "텍스트나 음성으로 사용자와 대화하는 프로그램입니다.",
+      en: "A program that converses with users through text or speech."
+    }
+  },
+  {
+    term: "生成式人工智能", korean: "생성형 인공지능", term_en: "Generative AI", difficulty: "简单",
+    description: "能够根据输入生成文本、图像、音频等新内容的人工智能。",
+    explanation: {
+      zh: "能够根据输入生成文本、图像、音频等新内容的人工智能。",
+      ko: "입력을 바탕으로 텍스트, 이미지, 오디오 등의 새로운 콘텐츠를 생성하는 인공지능입니다.",
+      en: "Artificial intelligence that generates new content such as text, images, or audio from input."
+    }
+  },
+  {
+    term: "基于人类反馈的强化学习", korean: "인간 피드백 기반 강화 학습", term_en: "Reinforcement Learning from Human Feedback (RLHF)", difficulty: "困难",
+    description: "利用人类偏好反馈优化模型行为的训练方法。",
+    explanation: {
+      zh: "利用人类偏好反馈优化模型行为的训练方法。",
+      ko: "사람의 선호도 피드백을 활용해 모델의 행동을 최적화하는 학습 방법입니다.",
+      en: "A training method that uses human preference feedback to optimize a model's behavior."
+    }
+  },
+  {
+    term: "专家混合模型", korean: "전문가 혼합 모델", term_en: "Mixture of Experts (MoE)", difficulty: "困难",
+    description: "由多个专家子网络组成，并通过路由机制选择部分专家处理输入的模型架构。",
+    explanation: {
+      zh: "由多个专家子网络组成，并通过路由机制选择部分专家处理输入的模型架构。",
+      ko: "여러 전문가 하위 네트워크로 구성되며 라우팅을 통해 입력을 처리할 일부 전문가를 선택하는 모델 구조입니다.",
+      en: "A model architecture with multiple expert subnetworks that routes each input to a selected subset of experts."
+    }
+  },
+  {
+    term: "键值缓存", korean: "KV 캐시", term_en: "Key-Value Cache (KV Cache)", difficulty: "困难",
+    description: "在自回归生成过程中缓存注意力层的键和值，以减少重复计算。",
+    explanation: {
+      zh: "在自回归生成过程中缓存注意力层的键和值，以减少重复计算。",
+      ko: "자기회귀 생성 중 어텐션 계층의 키와 값을 캐시해 반복 계산을 줄이는 기법입니다.",
+      en: "A technique that caches attention keys and values during autoregressive generation to avoid recomputing them."
+    }
+  },
+  {
+    term: "位置编码", korean: "위치 인코딩", term_en: "Positional Encoding", difficulty: "困难",
+    description: "将序列中各元素的位置信息加入模型输入或表示的方法。",
+    explanation: {
+      zh: "将序列中各元素的位置信息加入模型输入或表示的方法。",
+      ko: "시퀀스 요소의 위치 정보를 모델 입력이나 표현에 추가하는 방법입니다.",
+      en: "A method for adding the positional information of sequence elements to model inputs or representations."
+    }
+  },
+  {
+    term: "自注意力", korean: "자기 어텐션", term_en: "Self-Attention", difficulty: "困难",
+    description: "让序列中的每个位置根据其他位置的信息计算自身表示的注意力机制。",
+    explanation: {
+      zh: "让序列中的每个位置根据其他位置的信息计算自身表示的注意力机制。",
+      ko: "시퀀스의 각 위치가 다른 위치의 정보를 바탕으로 자신의 표현을 계산하는 어텐션 메커니즘입니다.",
+      en: "An attention mechanism in which each sequence position computes its representation using information from other positions."
+    }
+  },
+  {
+    term: "低秩适配", korean: "저랭크 적응", term_en: "Low-Rank Adaptation (LoRA)", difficulty: "困难",
+    description: "通过训练低秩矩阵来高效适配预训练模型的微调方法。",
+    explanation: {
+      zh: "通过训练低秩矩阵来高效适配预训练模型的微调方法。",
+      ko: "저랭크 행렬을 학습해 사전 학습 모델을 효율적으로 적응시키는 파인튜닝 방법입니다.",
+      en: "A fine-tuning method that efficiently adapts a pretrained model by training low-rank matrices."
+    }
+  },
+  {
+    term: "扩散模型", korean: "확산 모델", term_en: "Diffusion Model", difficulty: "困难",
+    description: "通过逐步去噪，从随机噪声中生成数据的生成模型。",
+    explanation: {
+      zh: "通过逐步去噪，从随机噪声中生成数据的生成模型。",
+      ko: "무작위 노이즈에서 단계적으로 노이즈를 제거해 데이터를 생성하는 생성 모델입니다.",
+      en: "A generative model that creates data by gradually removing noise from random noise."
+    }
+  },
+  {
+    term: "束搜索", korean: "빔 서치", term_en: "Beam Search", difficulty: "困难",
+    description: "在序列生成时保留多个高概率候选路径，并逐步扩展以寻找较优结果的搜索算法。",
+    explanation: {
+      zh: "在序列生成时保留多个高概率候选路径，并逐步扩展以寻找较优结果的搜索算法。",
+      ko: "시퀀스 생성 중 확률이 높은 여러 후보 경로를 유지하고 확장해 더 나은 결과를 찾는 탐색 알고리즘입니다.",
+      en: "A search algorithm that keeps and expands several high-probability candidate paths during sequence generation."
+    }
+  },
+  {
+    term: "困惑度", korean: "퍼플렉서티", term_en: "Perplexity", difficulty: "困难",
+    description: "用于衡量语言模型对文本序列预测不确定性的指标。",
+    explanation: {
+      zh: "用于衡量语言模型对文本序列预测不确定性的指标。",
+      ko: "언어 모델이 텍스트 시퀀스를 예측할 때의 불확실성을 측정하는 지표입니다.",
+      en: "A metric that measures a language model's uncertainty when predicting a text sequence."
+    }
+  },
+  {
+    term: "旋转位置嵌入", korean: "회전 위치 임베딩", term_en: "Rotary Positional Embedding (RoPE)", difficulty: "困难",
+    description: "通过旋转变换将位置信息融入注意力计算的相对位置编码方法。",
+    explanation: {
+      zh: "通过旋转变换将位置信息融入注意力计算的相对位置编码方法。",
+      ko: "회전 변환을 통해 위치 정보를 어텐션 계산에 반영하는 상대 위치 인코딩 방법입니다.",
+      en: "A relative positional encoding method that incorporates position information into attention computation through rotations."
+    }
   }
-].map((term) => ({
+].map((term, index) => ({
   ...term,
+  id: index + 21,
   zh: term.term,
   ko: term.korean,
   en: term.term_en,
@@ -558,6 +733,43 @@ const translations = {
       quiz: "答题",
       results: "成绩"
     },
+    growth: {
+      title: "我的成长",
+      totalXP: "累计经验",
+      nextLevel: "距离下一级还需 {xp} XP",
+      progressAria: "当前等级进度：{current} / {next} XP",
+      maxLevel: "已达到最高等级"
+    },
+    userCenter: {
+      title: "用户中心",
+      open: "打开用户中心",
+      close: "关闭",
+      profile: "当前状态",
+      totalXP: "累计经验",
+      progressAria: "当前等级经验进度",
+      nextLevel: "距离下一级还需要 {xp} XP",
+      maxLevel: "已达到最高等级 Lv.10",
+      changeAvatar: "更换头像",
+      changeFrame: "更换头像框",
+      editorEyebrow: "个人资料",
+      avatarPageTitle: "更换头像",
+      avatarPageDescription: "选择一张图片作为你的头像。",
+      framePageTitle: "更换头像框",
+      framePageDescription: "选择已解锁的头像框，预览后保存。",
+      avatarPreview: "头像预览",
+      framePreview: "头像框预览",
+      gallery: "头像框图鉴",
+      unlocked: "已解锁",
+      locked: "🔒 未解锁",
+      selected: "已使用",
+      chooseImage: "选择头像图片",
+      cancel: "取消",
+      save: "保存",
+      invalidImage: "请选择有效的图片文件。",
+      frameUnavailable: "该头像框尚未解锁。",
+      uploadFailed: "图片读取失败，请重试。",
+      saveFailed: "保存失败，请检查浏览器存储空间后重试。"
+    },
     home: {
       eyebrow: "AI · IT TERMINOLOGY",
       title: "准备好挑战术语了吗？",
@@ -566,9 +778,19 @@ const translations = {
       points: "每题 10 分",
       spotlightCaption: "每答一题，进步一点。"
     },
+    difficultySelection: {
+      eyebrow: "本轮设置",
+      title: "选择答题难度",
+      description: "选择适合自己的难度，开始本轮练习。",
+      simpleDescription: "AI 入门与常用概念",
+      normalDescription: "核心技术与常见方法",
+      hardDescription: "模型原理与工程细节"
+    },
     button: {
       openVocabulary: "查看词语库",
       start: "开始答题",
+      startRound: "开始本轮练习",
+      chooseDifficulty: "选择答题难度",
       replay: "再玩一次"
     },
     vocabulary: {
@@ -580,6 +802,12 @@ const translations = {
       chinese: "中文",
       korean: "韩文",
       englishDescription: "英文与描述",
+      difficulty: "难度",
+      difficultyLabels: {
+        easy: "简单",
+        medium: "普通",
+        hard: "困难"
+      },
       previous: "上一个",
       next: "下一个",
       noResults: "没有找到匹配的词语。",
@@ -594,6 +822,8 @@ const translations = {
       currentScore: "当前得分",
       questionExample: "中文问题示例",
       personalBest: "个人最佳",
+      comboLabel: "连击",
+      comboActive: "连击 x{count}!",
       feedback: "选择答案后，这里显示答对或答错的提示。"
     },
     score: {
@@ -606,7 +836,9 @@ const translations = {
     game: {
       correct: "回答正确！+10 分",
       incorrect: "回答错误，再接再厉！",
-      notEnoughQuestions: "题库目前只有 {count} 道题，至少需要 10 道不重复题目才能开始。"
+      notEnoughQuestions: "题库目前只有 {count} 道题，至少需要 10 道不重复题目才能开始。",
+      notEnoughDifficultyQuestions: "“{difficulty}”难度目前只有 {count} 道题，至少需要 {required} 道才能开始。",
+      invalidDifficulty: "无法识别所选难度，请重新选择。"
     },
     about: {
       eyebrow: "关于本项目",
@@ -620,11 +852,26 @@ const translations = {
       text: "AX Quiz Challenge · 项目结构与页面草图"
     },
     achievement: {
+      button: "成就",
+      eyebrow: "成长里程碑",
       unlocked: "成就解锁！",
+      shelfTitle: "成就书架",
+      shelfDescription: "每一份坚持，都值得被珍藏。",
+      locked: "尚未解锁",
+      close: "关闭",
       badges: {
         first_round: "第一步",
         enthusiastic_learner: "热情学习者",
-        master: "达人"
+        master: "达人",
+        bronze_scholar: "青铜学士",
+        gold_champion: "黄金冠军"
+      },
+      badgeLabels: {
+        first_round: "初次挑战",
+        enthusiastic_learner: "坚持学习",
+        master: "等级达人",
+        bronze_scholar: "学士",
+        gold_champion: "我们是冠军"
       }
     }
   },
@@ -643,6 +890,43 @@ const translations = {
       quiz: "퀴즈",
       results: "결과"
     },
+    growth: {
+      title: "나의 성장",
+      totalXP: "누적 경험치",
+      nextLevel: "다음 레벨까지 {xp} XP 남음",
+      progressAria: "현재 레벨 진행도: {current} / {next} XP",
+      maxLevel: "최고 레벨에 도달했습니다"
+    },
+    userCenter: {
+      title: "사용자 센터",
+      open: "사용자 센터 열기",
+      close: "닫기",
+      profile: "현재 상태",
+      totalXP: "누적 경험치",
+      progressAria: "현재 레벨 경험치 진행도",
+      nextLevel: "다음 레벨까지 {xp} XP 남음",
+      maxLevel: "최고 레벨 Lv.10에 도달했습니다",
+      changeAvatar: "프로필 사진 변경",
+      changeFrame: "아바타 프레임 변경",
+      editorEyebrow: "프로필",
+      avatarPageTitle: "프로필 사진 변경",
+      avatarPageDescription: "프로필 사진으로 사용할 이미지를 선택하세요.",
+      framePageTitle: "아바타 프레임 변경",
+      framePageDescription: "잠금 해제된 프레임을 선택하고 미리 본 후 저장하세요.",
+      avatarPreview: "프로필 사진 미리보기",
+      framePreview: "아바타 프레임 미리보기",
+      gallery: "아바타 프레임 도감",
+      unlocked: "잠금 해제됨",
+      locked: "🔒 잠김",
+      selected: "사용 중",
+      chooseImage: "프로필 사진 선택",
+      cancel: "취소",
+      save: "저장",
+      invalidImage: "올바른 이미지 파일을 선택해 주세요.",
+      frameUnavailable: "아직 잠금 해제되지 않은 프레임입니다.",
+      uploadFailed: "이미지를 읽지 못했습니다. 다시 시도해 주세요.",
+      saveFailed: "저장하지 못했습니다. 브라우저 저장 공간을 확인한 후 다시 시도해 주세요."
+    },
     home: {
       eyebrow: "AI · IT 용어",
       title: "용어 퀴즈를 시작할 준비가 되었나요?",
@@ -651,9 +935,19 @@ const translations = {
       points: "문제당 10점",
       spotlightCaption: "한 문제씩 풀며 꾸준히 성장하세요."
     },
+    difficultySelection: {
+      eyebrow: "라운드 설정",
+      title: "퀴즈 난이도 선택",
+      description: "이번 라운드에서 연습할 난이도를 선택하세요.",
+      simpleDescription: "AI 입문 및 기초 개념",
+      normalDescription: "핵심 기술과 일반적인 방법",
+      hardDescription: "모델 원리와 엔지니어링 세부 내용"
+    },
     button: {
       openVocabulary: "단어장 보기",
       start: "퀴즈 시작",
+      startRound: "이번 라운드 시작",
+      chooseDifficulty: "퀴즈 난이도 선택",
       replay: "다시 하기"
     },
     vocabulary: {
@@ -665,6 +959,12 @@ const translations = {
       chinese: "중국어",
       korean: "한국어",
       englishDescription: "영어 및 설명",
+      difficulty: "난이도",
+      difficultyLabels: {
+        easy: "쉬움",
+        medium: "보통",
+        hard: "어려움"
+      },
       previous: "이전",
       next: "다음",
       noResults: "일치하는 단어를 찾을 수 없습니다.",
@@ -679,6 +979,8 @@ const translations = {
       currentScore: "현재 점수",
       questionExample: "중국어 문제 예시",
       personalBest: "개인 최고 기록",
+      comboLabel: "콤보",
+      comboActive: "콤보 x{count}!",
       feedback: "답을 선택하면 정답 또는 오답 안내가 여기에 표시됩니다."
     },
     score: {
@@ -691,7 +993,9 @@ const translations = {
     game: {
       correct: "정답입니다! +10점",
       incorrect: "오답입니다. 다음 문제에 도전해 보세요!",
-      notEnoughQuestions: "현재 문제는 {count}개입니다. 시작하려면 중복되지 않는 문제가 10개 이상 필요합니다."
+      notEnoughQuestions: "현재 문제는 {count}개입니다. 시작하려면 중복되지 않는 문제가 10개 이상 필요합니다.",
+      notEnoughDifficultyQuestions: "{difficulty} 난이도 문제는 현재 {count}개입니다. 시작하려면 {required}개 이상 필요합니다.",
+      invalidDifficulty: "선택한 난이도를 확인할 수 없습니다. 다시 선택해 주세요."
     },
     about: {
       eyebrow: "프로젝트 소개",
@@ -705,11 +1009,26 @@ const translations = {
       text: "AX Quiz Challenge · 프로젝트 구조와 페이지 스케치"
     },
     achievement: {
+      button: "업적",
+      eyebrow: "성장 마일스톤",
       unlocked: "업적 달성！",
+      shelfTitle: "업적 책장",
+      shelfDescription: "꾸준한 노력의 순간을 모아 보세요.",
+      locked: "잠금 해제되지 않음",
+      close: "닫기",
       badges: {
         first_round: "첫걸음",
         enthusiastic_learner: "열정 학습자",
-        master: "달인"
+        master: "달인",
+        bronze_scholar: "브론즈 학자",
+        gold_champion: "골드 챔피언"
+      },
+      badgeLabels: {
+        first_round: "첫 도전",
+        enthusiastic_learner: "꾸준한 학습",
+        master: "레벨 달인",
+        bronze_scholar: "학사",
+        gold_champion: "우리가 챔피언"
       }
     }
   },
@@ -728,6 +1047,43 @@ const translations = {
       quiz: "Quiz",
       results: "Results"
     },
+    growth: {
+      title: "My Growth",
+      totalXP: "Total XP",
+      nextLevel: "{xp} XP to the next level",
+      progressAria: "Current level progress: {current} / {next} XP",
+      maxLevel: "Maximum level reached"
+    },
+    userCenter: {
+      title: "User Center",
+      open: "Open user center",
+      close: "Close",
+      profile: "Current status",
+      totalXP: "Total XP",
+      progressAria: "Current level XP progress",
+      nextLevel: "{xp} XP to the next level",
+      maxLevel: "Maximum level Lv.10 reached",
+      changeAvatar: "Change Avatar",
+      changeFrame: "Change Avatar Frame",
+      editorEyebrow: "PROFILE",
+      avatarPageTitle: "Change Avatar",
+      avatarPageDescription: "Choose an image to use as your avatar.",
+      framePageTitle: "Change Avatar Frame",
+      framePageDescription: "Choose an unlocked frame, preview it, then save.",
+      avatarPreview: "Avatar preview",
+      framePreview: "Avatar frame preview",
+      gallery: "Avatar Frame Collection",
+      unlocked: "Unlocked",
+      locked: "🔒 Locked",
+      selected: "Equipped",
+      chooseImage: "Choose an avatar image",
+      cancel: "Cancel",
+      save: "Save",
+      invalidImage: "Choose a valid image file.",
+      frameUnavailable: "That frame is still locked.",
+      uploadFailed: "Could not read the image. Please try again.",
+      saveFailed: "Could not save your changes. Check browser storage and try again."
+    },
     home: {
       eyebrow: "AI · IT TERMINOLOGY",
       title: "Ready to take on the terminology challenge?",
@@ -736,9 +1092,19 @@ const translations = {
       points: "10 points per question",
       spotlightCaption: "Keep learning, one question at a time."
     },
+    difficultySelection: {
+      eyebrow: "ROUND SETUP",
+      title: "Choose a quiz difficulty",
+      description: "Select a difficulty to start this round.",
+      simpleDescription: "AI basics and everyday terms",
+      normalDescription: "Core technologies and common methods",
+      hardDescription: "Model principles and engineering details"
+    },
     button: {
       openVocabulary: "View Vocabulary",
       start: "Start Quiz",
+      startRound: "Start This Round",
+      chooseDifficulty: "Choose a quiz difficulty",
       replay: "Play Again"
     },
     vocabulary: {
@@ -750,6 +1116,12 @@ const translations = {
       chinese: "Chinese",
       korean: "Korean",
       englishDescription: "English & description",
+      difficulty: "Difficulty",
+      difficultyLabels: {
+        easy: "Easy",
+        medium: "Medium",
+        hard: "Hard"
+      },
       previous: "Previous",
       next: "Next",
       noResults: "No matching terms found.",
@@ -764,6 +1136,8 @@ const translations = {
       currentScore: "Current score",
       questionExample: "Chinese question example",
       personalBest: "PERSONAL BEST",
+      comboLabel: "Combo",
+      comboActive: "Combo x{count}!",
       feedback: "After you choose an answer, feedback will appear here."
     },
     score: {
@@ -776,7 +1150,9 @@ const translations = {
     game: {
       correct: "Correct! +10 points",
       incorrect: "Not quite. Keep going!",
-      notEnoughQuestions: "The question bank has {count} questions. Add at least 10 unique questions to start."
+      notEnoughQuestions: "The question bank has {count} questions. Add at least 10 unique questions to start.",
+      notEnoughDifficultyQuestions: "There are only {count} {difficulty} questions. At least {required} are needed to start.",
+      invalidDifficulty: "The selected difficulty is not recognized. Please choose again."
     },
     about: {
       eyebrow: "ABOUT THIS PROJECT",
@@ -790,11 +1166,26 @@ const translations = {
       text: "AX Quiz Challenge · Project structure and page sketches"
     },
     achievement: {
+      button: "Achievements",
+      eyebrow: "MILESTONES",
       unlocked: "Achievement Unlocked!",
+      shelfTitle: "Achievement Shelf",
+      shelfDescription: "Every milestone deserves a place on the shelf.",
+      locked: "Locked",
+      close: "Close",
       badges: {
         first_round: "First Step",
         enthusiastic_learner: "Enthusiastic Learner",
-        master: "Master"
+        master: "Master",
+        bronze_scholar: "Bronze Scholar",
+        gold_champion: "Gold Champion"
+      },
+      badgeLabels: {
+        first_round: "First Challenge",
+        enthusiastic_learner: "Keep Learning",
+        master: "Level Master",
+        bronze_scholar: "Scholar",
+        gold_champion: "We Are the Champions"
       }
     }
   }
@@ -805,8 +1196,7 @@ const LANGUAGE_STORAGE_KEY = "axQuizLanguage";
 function updateAchievementToastLanguage(toast) {
   const achievementText = translations[currentLanguage].achievement;
   const badgeKey = toast.dataset.badgeKey;
-  toast.querySelector(".achievement-toast-name").textContent =
-    achievementText.badges[badgeKey];
+  toast.querySelector(".achievement-toast-name").textContent = achievementText.badges[badgeKey];
   toast.querySelector(".achievement-toast-message").textContent =
     achievementText.unlocked;
 }
@@ -847,24 +1237,459 @@ function unlockBadges(badgeKeys) {
     .filter((badgeKey) => typeof badgeKey === "string");
   const unlockedBadges = new Set(storedBadges);
   const newBadges = badgeKeys.filter(
-    (badgeKey) => !unlockedBadges.has(badgeKey) && !unlockedBadgesThisSession.has(badgeKey)
+    (badgeKey) => Object.prototype.hasOwnProperty.call(ACHIEVEMENTS, badgeKey)
+      && !unlockedBadges.has(badgeKey)
+      && !unlockedBadgesThisSession.has(badgeKey)
   );
   if (newBadges.length === 0) {
     return;
   }
 
   safeSetItem(BADGES_STORAGE_KEY, JSON.stringify([...unlockedBadges, ...newBadges]));
+  const savedBadges = new Set(getStoredArray(BADGES_STORAGE_KEY));
   newBadges.forEach((badgeKey) => {
+    if (!savedBadges.has(badgeKey)) {
+      return;
+    }
+
     unlockedBadgesThisSession.add(badgeKey);
     showAchievementToast(badgeKey);
   });
+  renderAchievementShelf();
+}
+
+function renderAchievementShelf() {
+  const shelfRows = document.querySelector("#achievement-shelf-rows");
+  if (!shelfRows) {
+    return;
+  }
+
+  const achievementText = translations[currentLanguage].achievement;
+  const unlockedBadges = new Set(getStoredArray(BADGES_STORAGE_KEY));
+  const achievementKeys = Object.keys(ACHIEVEMENTS);
+  shelfRows.replaceChildren();
+
+  for (let index = 0; index < achievementKeys.length; index += 3) {
+    const row = document.createElement("div");
+    row.className = "achievement-shelf-row";
+
+    achievementKeys.slice(index, index + 3).forEach((badgeKey) => {
+      const isUnlocked = unlockedBadges.has(badgeKey);
+      const tile = document.createElement("article");
+      const name = document.createElement("h3");
+      const award = document.createElement("span");
+      const trophy = document.createElement("span");
+      const lock = document.createElement("span");
+      const label = document.createElement("span");
+
+      tile.className = `achievement-shelf-slot achievement-shelf-slot--${badgeKey}`
+        + (isUnlocked ? " is-unlocked" : " is-locked");
+      name.className = "achievement-shelf-name";
+      name.textContent = achievementText.badges[badgeKey];
+      award.className = "achievement-shelf-award";
+      award.setAttribute("aria-hidden", "true");
+      trophy.className = "achievement-shelf-trophy";
+      trophy.textContent = ACHIEVEMENTS[badgeKey].icon;
+      lock.className = "achievement-shelf-lock";
+      lock.textContent = isUnlocked ? "" : "🔒";
+      award.append(trophy, lock);
+      label.className = "achievement-shelf-label";
+      label.textContent = isUnlocked
+        ? achievementText.badgeLabels[badgeKey]
+        : achievementText.locked;
+      tile.append(name, award, label);
+      row.append(tile);
+    });
+
+    shelfRows.append(row);
+  }
 }
 
 function getLevelForXP(xp) {
-  if (xp >= 250) {
-    return 3;
+  return Math.min(MAX_USER_LEVEL, Math.floor(xp / 100) + 1);
+}
+
+function renderGrowth() {
+  const level = getLevelForXP(totalXP);
+  const levelProgressXP = level === MAX_USER_LEVEL ? 100 : totalXP % 100;
+  const progressPercent = levelProgressXP;
+  const growthText = translations[currentLanguage].growth;
+
+  document.querySelectorAll("[data-growth-panel]").forEach((panel) => {
+    panel.querySelector("[data-growth-level]").textContent = `Lv.${level}`;
+    panel.querySelector("[data-growth-xp]").textContent = String(totalXP);
+
+    const progressTrack = panel.querySelector("[data-growth-progress]");
+    progressTrack.setAttribute("aria-valuenow", String(Math.round(progressPercent)));
+    progressTrack.setAttribute(
+      "aria-valuetext",
+      level === MAX_USER_LEVEL
+        ? growthText.maxLevel
+        : growthText.progressAria
+          .replace("{current}", String(levelProgressXP))
+          .replace("{next}", "100")
+    );
+    panel.querySelector("[data-growth-progress-fill]").style.width = `${progressPercent}%`;
+    panel.querySelector("[data-growth-next]").textContent = level === MAX_USER_LEVEL
+      ? growthText.maxLevel
+      : growthText.nextLevel.replace("{xp}", String(100 - levelProgressXP));
+  });
+
+  renderUserCenter();
+}
+
+function renderUserCenter() {
+  const level = getLevelForXP(totalXP);
+  const levelProgressXP = level === MAX_USER_LEVEL ? 100 : totalXP % 100;
+  const userCenterText = translations[currentLanguage].userCenter;
+  const progressTrack = document.querySelector("[data-user-progress]");
+
+  document.querySelectorAll("[data-user-level]").forEach((element) => {
+    element.textContent = `Lv.${level}`;
+  });
+  document.querySelector("[data-user-xp]").textContent = String(totalXP);
+  progressTrack.setAttribute("aria-valuenow", String(levelProgressXP));
+  progressTrack.setAttribute(
+    "aria-valuetext",
+    level === MAX_USER_LEVEL
+      ? userCenterText.maxLevel
+      : `${levelProgressXP} / 100 XP`
+  );
+  document.querySelector("[data-user-progress-fill]").style.width = `${levelProgressXP}%`;
+  document.querySelector("[data-user-next-level]").textContent =
+    level === MAX_USER_LEVEL
+      ? userCenterText.maxLevel
+      : userCenterText.nextLevel.replace("{xp}", String(100 - levelProgressXP));
+
+  document.querySelectorAll("[data-user-avatar]").forEach((avatarFrame) => {
+    Array.from(avatarFrame.classList)
+      .filter((className) => className.startsWith("avatar-frame--"))
+      .forEach((className) => avatarFrame.classList.remove(className));
+    avatarFrame.classList.add(`avatar-frame--${selectedAvatarFrame}`);
+    const placeholder = avatarFrame.querySelector("[data-user-avatar-placeholder]");
+    const image = avatarFrame.querySelector("[data-user-avatar-image]");
+    placeholder.hidden = Boolean(userAvatarData);
+    image.hidden = !userAvatarData;
+    if (userAvatarData) {
+      if (image.getAttribute("src") !== userAvatarData) {
+        image.src = userAvatarData;
+      }
+    } else {
+      image.removeAttribute("src");
+    }
+  });
+
+}
+
+function createAvatarHatSvg(idSuffix) {
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNamespace, "svg");
+  const definitions = document.createElementNS(svgNamespace, "defs");
+  const capGradientId = `avatar-cap-gradient-${idSuffix}`;
+  const tasselGradientId = `avatar-tassel-gradient-${idSuffix}`;
+  const capGradient = document.createElementNS(svgNamespace, "linearGradient");
+  const tasselGradient = document.createElementNS(svgNamespace, "linearGradient");
+
+  svg.classList.add("avatar-hat-svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+
+  capGradient.setAttribute("id", capGradientId);
+  capGradient.setAttribute("x1", "0");
+  capGradient.setAttribute("y1", "0");
+  capGradient.setAttribute("x2", "100");
+  capGradient.setAttribute("y2", "100");
+  capGradient.setAttribute("gradientUnits", "userSpaceOnUse");
+  const capStart = document.createElementNS(svgNamespace, "stop");
+  capStart.setAttribute("offset", "0%");
+  capStart.setAttribute("style", "stop-color: var(--frame-a)");
+  const capEnd = document.createElementNS(svgNamespace, "stop");
+  capEnd.setAttribute("offset", "100%");
+  capEnd.setAttribute("style", "stop-color: var(--frame-b)");
+  capGradient.append(capStart, capEnd);
+
+  tasselGradient.setAttribute("id", tasselGradientId);
+  tasselGradient.setAttribute("x1", "0");
+  tasselGradient.setAttribute("y1", "0");
+  tasselGradient.setAttribute("x2", "0");
+  tasselGradient.setAttribute("y2", "100");
+  tasselGradient.setAttribute("gradientUnits", "userSpaceOnUse");
+  const tasselStart = document.createElementNS(svgNamespace, "stop");
+  tasselStart.setAttribute("offset", "0%");
+  tasselStart.setAttribute("stop-color", "#fff3bb");
+  const tasselEndStop = document.createElementNS(svgNamespace, "stop");
+  tasselEndStop.setAttribute("offset", "100%");
+  tasselEndStop.setAttribute("stop-color", "#c88a18");
+  tasselGradient.append(tasselStart, tasselEndStop);
+
+  definitions.append(capGradient, tasselGradient);
+  const board = document.createElementNS(svgNamespace, "path");
+  board.classList.add("avatar-hat-board");
+  board.setAttribute("d", "M8 28 50 7 92 28 50 50Z");
+  board.setAttribute("fill", `url(#${capGradientId})`);
+  board.setAttribute("stroke", `url(#${capGradientId})`);
+
+  const crown = document.createElementNS(svgNamespace, "path");
+  crown.classList.add("avatar-hat-crown");
+  crown.setAttribute("d", "M24 38 50 51 76 38V57Q50 74 24 57Z");
+  crown.setAttribute("fill", `url(#${capGradientId})`);
+  crown.setAttribute("stroke", `url(#${capGradientId})`);
+
+  const brim = document.createElementNS(svgNamespace, "path");
+  brim.classList.add("avatar-hat-brim");
+  brim.setAttribute("d", "M15 56Q50 81 85 56");
+  brim.setAttribute("fill", "none");
+  brim.setAttribute("stroke", `url(#${capGradientId})`);
+
+  const tassel = document.createElementNS(svgNamespace, "g");
+  tassel.classList.add("avatar-hat-tassel");
+  tassel.setAttribute("fill", `url(#${tasselGradientId})`);
+  tassel.setAttribute("stroke", `url(#${tasselGradientId})`);
+  const cord = document.createElementNS(svgNamespace, "path");
+  cord.setAttribute("d", "M84 29C88 38 88 46 84 54");
+  cord.setAttribute("fill", "none");
+  const tasselEnd = document.createElementNS(svgNamespace, "path");
+  tasselEnd.setAttribute("d", "M81 52 87 54 85 63 81 60 77 65 78 54Z");
+  tassel.append(cord, tasselEnd);
+
+  svg.append(definitions, board, crown, brim, tassel);
+  return svg;
+}
+
+function renderAvatarPreview(preview, avatarData, frameLevel, idSuffix) {
+  Array.from(preview.classList)
+    .filter((className) => className.startsWith("avatar-frame--"))
+    .forEach((className) => preview.classList.remove(className));
+  preview.classList.add(`avatar-frame--${frameLevel}`);
+
+  const placeholder = document.createElement("span");
+  placeholder.className = "user-avatar-placeholder";
+  placeholder.setAttribute("aria-hidden", "true");
+  placeholder.textContent = "👤";
+  placeholder.hidden = Boolean(avatarData);
+
+  const image = document.createElement("img");
+  image.className = "user-avatar-image";
+  image.alt = "";
+  image.hidden = !avatarData;
+  if (avatarData) {
+    image.src = avatarData;
   }
-  return xp >= 100 ? 2 : 1;
+
+  preview.replaceChildren(createAvatarHatSvg(idSuffix), placeholder, image);
+}
+
+function renderProfileEditorStatus() {
+  const userCenterText = translations[currentLanguage].userCenter;
+  const statusText = userCenterStatusKey ? userCenterText[userCenterStatusKey] : "";
+  document.querySelector("#avatar-editor-status").textContent = statusText;
+  document.querySelector("#avatar-frame-editor-status").textContent = statusText;
+}
+
+function renderAvatarEditors() {
+  renderAvatarPreview(
+    document.querySelector("#avatar-editor-preview"),
+    draftAvatarData,
+    draftAvatarFrame,
+    "avatar-editor"
+  );
+  renderAvatarPreview(
+    document.querySelector("#avatar-frame-editor-preview"),
+    draftAvatarData,
+    draftAvatarFrame,
+    "frame-editor"
+  );
+
+  const level = getLevelForXP(totalXP);
+  renderAvatarFrameGallery(level, translations[currentLanguage].userCenter, draftAvatarFrame);
+  renderProfileEditorStatus();
+}
+
+function renderAvatarFrameGallery(level, userCenterText, selectedFrame) {
+  const gallery = document.querySelector("#avatar-frame-grid");
+  gallery.replaceChildren();
+
+  for (let frameLevel = 1; frameLevel <= MAX_USER_LEVEL; frameLevel += 1) {
+    const isUnlocked = frameLevel <= level;
+    const isSelected = frameLevel === selectedFrame;
+    const status = isUnlocked
+      ? isSelected
+        ? `${userCenterText.unlocked} · ${userCenterText.selected}`
+        : userCenterText.unlocked
+      : userCenterText.locked;
+    const button = document.createElement("button");
+    const preview = document.createElement("span");
+    const previewIcon = document.createElement("span");
+    const frameName = document.createElement("span");
+    const frameStatus = document.createElement("span");
+
+    button.className = "avatar-frame-option";
+    button.type = "button";
+    button.disabled = !isUnlocked;
+    button.dataset.frameLevel = String(frameLevel);
+    button.setAttribute("aria-pressed", String(isSelected));
+    button.setAttribute("aria-label", `Lv.${frameLevel} · ${status}`);
+    button.classList.toggle("is-selected", isSelected);
+
+    preview.className = `avatar-frame-preview avatar-frame--${frameLevel}`;
+    previewIcon.className = "avatar-frame-preview-icon";
+    previewIcon.setAttribute("aria-hidden", "true");
+    previewIcon.textContent = "👤";
+    frameName.className = "frame-option-name";
+    frameName.textContent = `Lv.${frameLevel}`;
+    frameStatus.className = "frame-option-status";
+    frameStatus.textContent = status;
+    preview.append(createAvatarHatSvg(`frame-${frameLevel}`), previewIcon);
+    button.append(preview, frameName, frameStatus);
+    gallery.append(button);
+  }
+}
+
+function initializeUserCenter() {
+  const storedAvatar = safeGetItem(AVATAR_STORAGE_KEY);
+  if (storedAvatar && storedAvatar.startsWith("data:image/")) {
+    userAvatarData = storedAvatar;
+  } else if (storedAvatar) {
+    console.warn("LocalStorage 中的头像数据格式无效。");
+  }
+
+  const storedFrame = Number(safeGetItem(AVATAR_FRAME_STORAGE_KEY));
+  const userLevel = getLevelForXP(totalXP);
+  selectedAvatarFrame = Number.isInteger(storedFrame) && storedFrame >= 1 && storedFrame <= userLevel
+    ? storedFrame
+    : userLevel;
+  safeSetItem(AVATAR_FRAME_STORAGE_KEY, String(selectedAvatarFrame));
+  draftAvatarData = userAvatarData;
+  draftAvatarFrame = selectedAvatarFrame;
+}
+
+function handleAvatarFrameSelection(event) {
+  const frameButton = event.target.closest("[data-frame-level]");
+  if (!frameButton || frameButton.disabled) {
+    return;
+  }
+
+  const frameLevel = Number(frameButton.dataset.frameLevel);
+  if (!Number.isInteger(frameLevel) || frameLevel < 1 || frameLevel > getLevelForXP(totalXP)) {
+    return;
+  }
+
+  draftAvatarFrame = frameLevel;
+  userCenterStatusKey = "";
+  renderAvatarEditors();
+}
+
+function handleAvatarFileChange(event) {
+  const fileInput = event.currentTarget;
+  const file = fileInput.files[0];
+  if (!file) {
+    return;
+  }
+  fileInput.value = "";
+
+  if (!file.type.startsWith("image/")) {
+    userCenterStatusKey = "invalidImage";
+    renderProfileEditorStatus();
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    if (typeof reader.result !== "string" || !reader.result.startsWith("data:image/")) {
+      userCenterStatusKey = "uploadFailed";
+      renderProfileEditorStatus();
+      return;
+    }
+
+    draftAvatarData = reader.result;
+    userCenterStatusKey = "";
+    renderAvatarEditors();
+  });
+  reader.addEventListener("error", () => {
+    userCenterStatusKey = "uploadFailed";
+    renderProfileEditorStatus();
+  });
+  reader.readAsDataURL(file);
+}
+
+function handleUserCenterOpen() {
+  const dialog = document.querySelector("#user-center-dialog");
+  renderUserCenter();
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+}
+
+function handleUserCenterClose() {
+  document.querySelector("#user-center-dialog").close();
+}
+
+function openProfileEditor(pageId) {
+  document.querySelector("#user-center-dialog").close();
+  draftAvatarData = userAvatarData;
+  draftAvatarFrame = selectedAvatarFrame;
+  userCenterStatusKey = "";
+  renderAvatarEditors();
+  showPage(pageId, true);
+}
+
+function handleProfileEditorCancel() {
+  draftAvatarData = userAvatarData;
+  draftAvatarFrame = selectedAvatarFrame;
+  userCenterStatusKey = "";
+  showPage("home", true);
+}
+
+function handleAvatarSave() {
+  safeSetItem(AVATAR_STORAGE_KEY, draftAvatarData);
+  if (safeGetItem(AVATAR_STORAGE_KEY) !== draftAvatarData) {
+    userCenterStatusKey = "saveFailed";
+    renderProfileEditorStatus();
+    return;
+  }
+
+  userAvatarData = draftAvatarData;
+  userCenterStatusKey = "";
+  renderUserCenter();
+  showPage("home", true);
+}
+
+function handleAvatarFrameSave() {
+  if (
+    !Number.isInteger(draftAvatarFrame)
+    || draftAvatarFrame < 1
+    || draftAvatarFrame > getLevelForXP(totalXP)
+  ) {
+    userCenterStatusKey = "frameUnavailable";
+    renderProfileEditorStatus();
+    return;
+  }
+
+  const savedFrame = String(draftAvatarFrame);
+  safeSetItem(AVATAR_FRAME_STORAGE_KEY, savedFrame);
+  if (safeGetItem(AVATAR_FRAME_STORAGE_KEY) !== savedFrame) {
+    userCenterStatusKey = "saveFailed";
+    renderProfileEditorStatus();
+    return;
+  }
+
+  selectedAvatarFrame = draftAvatarFrame;
+  userCenterStatusKey = "";
+  renderUserCenter();
+  showPage("home", true);
+}
+
+function handleAchievementShelfOpen() {
+  const dialog = document.querySelector("#achievement-shelf-dialog");
+  renderAchievementShelf();
+  if (!dialog.open) {
+    dialog.showModal();
+  }
+}
+
+function handleAchievementShelfClose() {
+  document.querySelector("#achievement-shelf-dialog").close();
 }
 
 function recordLearningProgress(isCorrect) {
@@ -877,6 +1702,7 @@ function recordLearningProgress(isCorrect) {
   }
   safeSetItem(XP_STORAGE_KEY, String(totalXP));
   safeSetItem(TOTAL_CORRECT_STORAGE_KEY, String(totalCorrectAnswers));
+  renderGrowth();
 
   const earnedBadges = [];
   if (totalCorrectAnswers >= 20) {
@@ -957,6 +1783,8 @@ function switchLanguage(lang) {
   updateCurrentQuestionLanguage();
   updateDynamicLabels();
   updateVisibleAchievementToasts();
+  renderAchievementShelf();
+  renderAvatarEditors();
 }
 
 // 按当前学习日渲染词语表。
@@ -983,6 +1811,7 @@ function renderVocabulary() {
     const chineseCell = document.createElement("td");
     const koreanCell = document.createElement("td");
     const englishCell = document.createElement("td");
+    const difficultyCell = document.createElement("td");
     chineseCell.textContent = term.term;
     koreanCell.append(
       document.createTextNode(term.korean),
@@ -999,7 +1828,12 @@ function renderVocabulary() {
     englishDescription.textContent = term.explanation[currentLang];
     englishCell.append(englishTerm, englishDescription);
 
-    row.append(chineseCell, koreanCell, englishCell);
+    const difficultyBadge = createDifficultyBadge(term.difficulty);
+    if (difficultyBadge) {
+      difficultyCell.append(difficultyBadge);
+    }
+
+    row.append(chineseCell, koreanCell, englishCell, difficultyCell);
     vocabularyListElement.append(row);
   });
 
@@ -1149,6 +1983,63 @@ function createSpeechButton(term, language) {
   return button;
 }
 
+function getDifficultyLevel(difficulty) {
+  const normalizedDifficulty = typeof difficulty === "string"
+    ? difficulty.trim().toLocaleLowerCase()
+    : "";
+
+  if (
+    normalizedDifficulty === "简单"
+    || normalizedDifficulty === "simple"
+    || normalizedDifficulty === "easy"
+  ) {
+    return "easy";
+  }
+  if (
+    normalizedDifficulty === "普通"
+    || normalizedDifficulty === "normal"
+    || normalizedDifficulty === "medium"
+  ) {
+    return "medium";
+  }
+  if (normalizedDifficulty === "困难" || normalizedDifficulty === "hard") {
+    return "hard";
+  }
+
+  return null;
+}
+
+function createDifficultyBadge(difficulty) {
+  const difficultyLevel = getDifficultyLevel(difficulty);
+  if (!difficultyLevel) {
+    return null;
+  }
+
+  const vocabularyText = translations[currentLanguage].vocabulary;
+  const badge = document.createElement("span");
+  badge.className = `badge difficulty-badge difficulty-badge--${difficultyLevel}`;
+  badge.textContent = vocabularyText.difficultyLabels[difficultyLevel];
+  badge.setAttribute(
+    "aria-label",
+    `${vocabularyText.difficulty}: ${badge.textContent}`
+  );
+  return badge;
+}
+
+function updateQuestionDifficulty(difficulty) {
+  const difficultyContainer = document.querySelector("#question-difficulty");
+  if (!difficultyContainer) {
+    return;
+  }
+
+  const badge = createDifficultyBadge(difficulty);
+  difficultyContainer.replaceChildren();
+  difficultyContainer.hidden = !badge;
+  if (badge) {
+    difficultyContainer.append(badge);
+  }
+}
+
 // 根据搜索框内容筛选词语行；无输入，更新表格可见状态和无结果提示。
 function applyVocabularySearch() {
   const searchInput = document.querySelector("#vocabulary-search");
@@ -1204,18 +2095,37 @@ function hasAllTranslations(value) {
     );
 }
 
-// 从题库副本中使用 Fisher-Yates 算法抽题；验证新数据结构并返回 10 道不重复题目。
-function getRandomQuestions() {
-  const shuffledQuestions = Array.isArray(wordList) ? [...wordList] : [];
-  const questionIds = shuffledQuestions.map((word) =>
+// 按难度过滤题库并抽取一轮题目，同时校验题库结构和题目 ID。
+function getRandomQuestions(difficulty) {
+  const difficultyLevel = getDifficultyLevel(difficulty);
+  if (!difficultyLevel) {
+    throw new Error(translations[currentLanguage].game.invalidDifficulty);
+  }
+
+  const allQuestions = Array.isArray(wordList) ? [...wordList] : [];
+  const questionIds = allQuestions.map((word) =>
     Number.isInteger(word.id) ? word.id : wordList.indexOf(word) + 1
   );
 
   if (
-    shuffledQuestions.length !== TOTAL_QUESTIONS
+    allQuestions.length !== TOTAL_QUESTIONS
     || new Set(questionIds).size !== TOTAL_QUESTIONS
   ) {
     throw new Error(`题库格式有误：必须包含 ${TOTAL_QUESTIONS} 道 ID 唯一的题目。`);
+  }
+
+  const shuffledQuestions = allQuestions.filter(
+    (word) => getDifficultyLevel(word.difficulty) === difficultyLevel
+  );
+  if (shuffledQuestions.length < QUESTIONS_PER_ROUND) {
+    const gameText = translations[currentLanguage].game;
+    const difficultyLabel =
+      translations[currentLanguage].vocabulary.difficultyLabels[difficultyLevel];
+    const errorMessage = gameText.notEnoughDifficultyQuestions
+      .replace("{difficulty}", difficultyLabel)
+      .replace("{count}", String(shuffledQuestions.length))
+      .replace("{required}", String(QUESTIONS_PER_ROUND));
+    throw new Error(errorMessage);
   }
 
   for (let index = shuffledQuestions.length - 1; index > 0; index -= 1) {
@@ -1226,12 +2136,36 @@ function getRandomQuestions() {
 
   const selectedQuestions = shuffledQuestions.slice(0, QUESTIONS_PER_ROUND).map((word) => {
     if (word.question) {
-      return word;
+      if (
+        !Array.isArray(word.options)
+        || word.options.length !== 4
+        || !Number.isInteger(word.answer)
+        || word.answer < 0
+        || word.answer >= word.options.length
+      ) {
+        return word;
+      }
+
+      const distractors = shuffledQuestions
+        .filter((candidate) => candidate.term !== word.term)
+        .slice(0, word.options.length - 1)
+        .map((candidate) => ({
+          zh: candidate.term,
+          ko: candidate.korean,
+          en: candidate.term_en
+        }));
+      let distractorIndex = 0;
+      return {
+        ...word,
+        options: word.options.map((option, optionIndex) =>
+          optionIndex === word.answer ? option : distractors[distractorIndex++]
+        )
+      };
     }
 
     const wordIndex = vocabularyList.indexOf(word);
     const answer = wordIndex % 4;
-    const distractors = vocabularyList.filter((candidate) => candidate.term !== word.term);
+    const distractors = shuffledQuestions.filter((candidate) => candidate.term !== word.term);
     let distractorIndex = 0;
     const options = Array.from({ length: 4 }, (_, optionIndex) => {
       const optionTerm = optionIndex === answer
@@ -1250,6 +2184,7 @@ function getRandomQuestions() {
       term: word.term,
       korean: word.korean,
       term_en: word.term_en,
+      difficulty: word.difficulty,
       description: word.description,
       explanation: word.explanation,
       question: {
@@ -1297,6 +2232,7 @@ function renderQuestion() {
 
   questionHeading.textContent = question.question[currentLanguage];
   questionLabel.textContent = translations[currentLanguage].quiz.questionExample;
+  updateQuestionDifficulty(question.difficulty);
   optionsContainer.replaceChildren();
 
   question.options.forEach((option, optionIndex) => {
@@ -1329,6 +2265,7 @@ function updateCurrentQuestionLanguage() {
 
   document.querySelector(".question-card h3").textContent =
     question.question[currentLanguage];
+  updateQuestionDifficulty(question.difficulty);
 
   document.querySelectorAll(".options .option").forEach((button) => {
     const option = question.options[Number(button.dataset.answerIndex)];
@@ -1365,6 +2302,13 @@ function handleAnswerClick(event) {
   const selectedButton = event.currentTarget;
   const question = currentQuiz[currentQuestionIndex];
   const isCorrect = checkAnswer(selectedButton.dataset.answerIndex, question);
+  combo = isCorrect ? combo + 1 : 0;
+  renderComboDisplay(true);
+  if (combo === 3) {
+    unlockBadges(["bronze_scholar"]);
+  } else if (combo === 10) {
+    unlockBadges(["gold_champion"]);
+  }
   isAnswerLocked = true;
 
   document.querySelectorAll(".options .option").forEach((button) => {
@@ -1466,6 +2410,8 @@ function updateDynamicLabels() {
   const feedback = document.querySelector(".feedback");
   const questionLabel = document.querySelector(".question-label");
 
+  renderComboDisplay();
+
   if (questionLabel) {
     questionLabel.textContent = languageText.quiz.questionExample;
   }
@@ -1502,6 +2448,33 @@ function updateDynamicLabels() {
   }
 
   renderHighScore(currentHighScore);
+  renderGrowth();
+}
+
+function renderComboDisplay(animate = false) {
+  const display = document.querySelector("#combo-display");
+  const message = document.querySelector("#combo-message");
+  if (!display || !message) {
+    return;
+  }
+
+  const quizText = translations[currentLanguage].quiz;
+  const isComboActive = combo >= 3;
+  const template = isComboActive ? quizText.comboActive : `${quizText.comboLabel} ×${combo}`;
+  message.textContent = isComboActive
+    ? template.replace("{count}", String(combo))
+    : template;
+  display.setAttribute("aria-label", message.textContent);
+  display.classList.toggle("is-active", isComboActive);
+  display.classList.remove("is-triggered");
+
+  if (animate && isComboActive) {
+    window.requestAnimationFrame(() => {
+      if (combo >= 3 && display.isConnected) {
+        display.classList.add("is-triggered");
+      }
+    });
+  }
 }
 
 // 同步顶部导航的当前页面状态。
@@ -1521,7 +2494,15 @@ function updateActiveNavigation(pageId) {
 
 // 显示指定页面；可按页面顺序播放对应方向的 3D 翻页动画。
 function showPage(pageId, animate = false) {
-  const pageIds = ["home", "vocabulary-page", "quiz-page", "results"];
+  const pageIds = [
+    "home",
+    "difficulty-select",
+    "avatar-page",
+    "avatar-frame-page",
+    "vocabulary-page",
+    "quiz-page",
+    "results"
+  ];
   if (!pageIds.includes(pageId)) {
     console.warn(`找不到页面区域：${pageId}`);
     return;
@@ -1598,25 +2579,25 @@ function handlePageNavigation(event) {
   const pageId = pageLink.dataset.page;
 
   if (pageId === "quiz-page" && currentQuiz.length === 0) {
-    startGame(true);
+    showPage("difficulty-select", true);
     return;
   }
 
   showPage(pageId, true);
 }
 
-// 开始新一轮；清零分数和题号，抽取新题并显示答题页面，无返回值。
-function startGame(animate = false) {
+// 按选定难度开始新一轮；抽题失败时在难度选择页面显示错误。
+function startGame(difficulty, animate = false) {
   if (isPageTransitioning) {
-    return;
+    return false;
   }
 
   let newRoundQuestions;
   try {
-    newRoundQuestions = getRandomQuestions();
+    newRoundQuestions = getRandomQuestions(difficulty);
   } catch (error) {
-    window.alert(error.message);
-    return;
+    document.querySelector("#difficulty-selection-error").textContent = error.message;
+    return false;
   }
 
   if (advanceTimeoutId !== null) {
@@ -1633,6 +2614,27 @@ function startGame(animate = false) {
   isAnswerLocked = false;
   showPage("quiz-page", animate);
   renderQuestion();
+  return true;
+}
+
+function handleDifficultyOptionClick(event) {
+  const option = event.target.closest("[data-quiz-difficulty]");
+  if (!option) {
+    return;
+  }
+
+  const difficultyLevel = getDifficultyLevel(option.dataset.quizDifficulty);
+  if (!difficultyLevel) {
+    return;
+  }
+
+  selectedDifficulty = option.dataset.quizDifficulty;
+  document.querySelectorAll("[data-quiz-difficulty]").forEach((difficultyOption) => {
+    const isSelected = difficultyOption === option;
+    difficultyOption.classList.toggle("is-selected", isSelected);
+    difficultyOption.setAttribute("aria-pressed", String(isSelected));
+  });
+  document.querySelector("#difficulty-selection-error").textContent = "";
 }
 
 // 响应语言按钮点击；输入点击事件，切换到按钮标注的语言，无返回值。
@@ -1640,15 +2642,21 @@ function handleLanguageButtonClick(event) {
   switchLanguage(event.currentTarget.dataset.lang);
 }
 
-// 响应开始和再玩一次按钮点击；输入点击事件，启动一轮新游戏，无返回值。
+// 使用难度选择页面当前选中的难度启动答题。
 function handleStartButtonClick() {
-  startGame(true);
+  document.querySelector("#difficulty-selection-error").textContent = "";
+  startGame(selectedDifficulty, true);
+}
+
+function handleReplayButtonClick() {
+  showPage("difficulty-select", true);
 }
 
 // 初始化页面状态、最高分显示和按钮事件；无输入与返回值。
 function initializeGame() {
   totalXP = getStoredInteger(XP_STORAGE_KEY);
   totalCorrectAnswers = getStoredInteger(TOTAL_CORRECT_STORAGE_KEY);
+  initializeUserCenter();
   const rawHighScore = safeGetItem(HIGH_SCORE_STORAGE_KEY);
   console.log("读取到的原始数据：", rawHighScore);
 
@@ -1661,14 +2669,58 @@ function initializeGame() {
     button.addEventListener("click", handleLanguageButtonClick);
   });
 
+  document.querySelector("#user-center-open").addEventListener("click", handleUserCenterOpen);
+  document.querySelector("#user-center-close").addEventListener("click", handleUserCenterClose);
+  document.querySelector("#achievement-shelf-open").addEventListener(
+    "click",
+    handleAchievementShelfOpen
+  );
+  document.querySelector("#achievement-shelf-close").addEventListener(
+    "click",
+    handleAchievementShelfClose
+  );
+  document.querySelector("#user-center-dialog").addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) {
+      handleUserCenterClose();
+    }
+  });
+  document.querySelector("#achievement-shelf-dialog").addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) {
+      handleAchievementShelfClose();
+    }
+  });
+  document.querySelector("#change-user-avatar").addEventListener("click", () => {
+    openProfileEditor("avatar-page");
+  });
+  document.querySelector("#change-user-frame").addEventListener("click", () => {
+    openProfileEditor("avatar-frame-page");
+  });
+  document.querySelector("#avatar-page-file").addEventListener("change", handleAvatarFileChange);
+  document.querySelector("#avatar-frame-grid").addEventListener(
+    "click",
+    handleAvatarFrameSelection
+  );
+  document.querySelector("#save-avatar-button").addEventListener("click", handleAvatarSave);
+  document.querySelector("#save-avatar-frame-button").addEventListener(
+    "click",
+    handleAvatarFrameSave
+  );
+  document.querySelectorAll("[data-profile-editor-cancel]").forEach((button) => {
+    button.addEventListener("click", handleProfileEditorCancel);
+  });
+
   document.addEventListener("click", handlePageNavigation);
   document.querySelector("#vocabulary-search").addEventListener("input", applyVocabularySearch);
   document.querySelector("#vocabulary-list").addEventListener("click", handleVocabularySpeech);
   document.querySelector("#study-day-navigation").addEventListener("click", handleStudyDayNavigation);
+  document.querySelector("#difficulty-options").addEventListener(
+    "click",
+    handleDifficultyOptionClick
+  );
   document.querySelector("#start-quiz-button").addEventListener("click", handleStartButtonClick);
   document.querySelector('[data-i18n="button.replay"]').addEventListener(
     "click",
-    handleStartButtonClick
+    handleReplayButtonClick
   );
 
   const savedLanguage = safeGetItem(LANGUAGE_STORAGE_KEY);

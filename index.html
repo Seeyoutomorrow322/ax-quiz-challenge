@@ -23,16 +23,109 @@
       <nav class="menu menu-horizontal site-nav" aria-label="页面导航" data-i18n-aria-label="accessibility.navigation">
         <a href="#home" data-page="home" data-i18n="navigation.home">开始</a>
         <a href="#vocabulary-page" data-page="vocabulary-page" data-i18n="navigation.vocabulary">词语库</a>
-        <a href="#quiz-page" data-page="quiz-page" data-i18n="navigation.quiz">答题</a>
+        <a href="#difficulty-select" data-page="difficulty-select" data-i18n="navigation.quiz">答题</a>
         <a href="#results" data-page="results" data-i18n="navigation.results">成绩</a>
       </nav>
-      <div class="language-switcher" role="group" aria-label="选择界面语言" data-i18n-aria-label="accessibility.language">
-        <button class="btn btn-ghost btn-sm language-button is-active" type="button" data-lang="zh" aria-pressed="true">中文</button>
-        <button class="btn btn-ghost btn-sm language-button" type="button" data-lang="ko" aria-pressed="false">한국어</button>
-        <button class="btn btn-ghost btn-sm language-button" type="button" data-lang="en" aria-pressed="false">English</button>
+      <div class="account-controls">
+        <div class="language-switcher" role="group" aria-label="选择界面语言" data-i18n-aria-label="accessibility.language">
+          <button class="btn btn-ghost btn-sm language-button is-active" type="button" data-lang="zh" aria-pressed="true">中文</button>
+          <button class="btn btn-ghost btn-sm language-button" type="button" data-lang="ko" aria-pressed="false">한국어</button>
+          <button class="btn btn-ghost btn-sm language-button" type="button" data-lang="en" aria-pressed="false">English</button>
+        </div>
+        <button class="user-center-trigger" id="user-center-open" type="button" aria-label="打开用户中心" data-i18n-aria-label="userCenter.open">
+          <span class="avatar-frame avatar-frame--1" data-user-avatar data-avatar-frame>
+            <svg class="avatar-hat-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="avatar-cap-gradient-header" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" style="stop-color: var(--frame-a)"></stop>
+                  <stop offset="100%" style="stop-color: var(--frame-b)"></stop>
+                </linearGradient>
+                <linearGradient id="avatar-tassel-gradient-header" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff3bb"></stop>
+                  <stop offset="100%" stop-color="#c88a18"></stop>
+                </linearGradient>
+              </defs>
+              <path class="avatar-hat-board" d="M8 28 50 7 92 28 50 50Z" fill="url(#avatar-cap-gradient-header)" stroke="url(#avatar-cap-gradient-header)"></path>
+              <path class="avatar-hat-crown" d="M24 38 50 51 76 38V57Q50 74 24 57Z" fill="url(#avatar-cap-gradient-header)" stroke="url(#avatar-cap-gradient-header)"></path>
+              <path class="avatar-hat-brim" d="M15 56Q50 81 85 56" fill="none" stroke="url(#avatar-cap-gradient-header)"></path>
+              <g class="avatar-hat-tassel" fill="url(#avatar-tassel-gradient-header)" stroke="url(#avatar-tassel-gradient-header)">
+                <path d="M84 29C88 38 88 46 84 54" fill="none"></path>
+                <path d="M81 52 87 54 85 63 81 60 77 65 78 54Z"></path>
+              </g>
+            </svg>
+            <span class="user-avatar-placeholder" data-user-avatar-placeholder aria-hidden="true">👤</span>
+            <img class="user-avatar-image" data-user-avatar-image alt="" hidden>
+          </span>
+          <span class="user-level-badge" data-user-level>Lv.1</span>
+        </button>
       </div>
     </div>
   </header>
+
+  <dialog class="user-center-dialog" id="user-center-dialog" aria-labelledby="user-center-title">
+    <div class="user-center-content">
+      <div class="user-center-heading">
+        <h2 id="user-center-title" data-i18n="userCenter.title">用户中心</h2>
+        <button class="user-center-close" id="user-center-close" type="button" aria-label="关闭" data-i18n-aria-label="userCenter.close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <section class="user-profile-summary" aria-label="当前状态" data-i18n-aria-label="userCenter.profile">
+        <span class="avatar-frame avatar-frame--1 user-avatar-large" data-user-avatar data-avatar-frame>
+          <svg class="avatar-hat-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="avatar-cap-gradient-profile" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" style="stop-color: var(--frame-a)"></stop>
+                <stop offset="100%" style="stop-color: var(--frame-b)"></stop>
+              </linearGradient>
+              <linearGradient id="avatar-tassel-gradient-profile" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#fff3bb"></stop>
+                <stop offset="100%" stop-color="#c88a18"></stop>
+              </linearGradient>
+            </defs>
+            <path class="avatar-hat-board" d="M8 28 50 7 92 28 50 50Z" fill="url(#avatar-cap-gradient-profile)" stroke="url(#avatar-cap-gradient-profile)"></path>
+            <path class="avatar-hat-crown" d="M24 38 50 51 76 38V57Q50 74 24 57Z" fill="url(#avatar-cap-gradient-profile)" stroke="url(#avatar-cap-gradient-profile)"></path>
+            <path class="avatar-hat-brim" d="M15 56Q50 81 85 56" fill="none" stroke="url(#avatar-cap-gradient-profile)"></path>
+            <g class="avatar-hat-tassel" fill="url(#avatar-tassel-gradient-profile)" stroke="url(#avatar-tassel-gradient-profile)">
+              <path d="M84 29C88 38 88 46 84 54" fill="none"></path>
+              <path d="M81 52 87 54 85 63 81 60 77 65 78 54Z"></path>
+            </g>
+          </svg>
+          <span class="user-avatar-placeholder" data-user-avatar-placeholder aria-hidden="true">👤</span>
+          <img class="user-avatar-image" data-user-avatar-image alt="" hidden>
+        </span>
+        <strong class="user-profile-level" data-user-level>Lv.1</strong>
+        <div class="user-xp-meta">
+          <span data-i18n="userCenter.totalXP">累计经验</span>
+          <strong><span data-user-xp>0</span> XP</strong>
+        </div>
+        <div class="user-xp-track" data-user-progress role="progressbar" aria-label="当前等级经验进度" data-i18n-aria-label="userCenter.progressAria" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="user-xp-fill" data-user-progress-fill></span>
+        </div>
+        <p class="user-next-level" data-user-next-level>距离下一级还需要 100 XP</p>
+      </section>
+      <div class="user-center-actions">
+        <button class="btn btn-outline" id="change-user-avatar" type="button" data-i18n="userCenter.changeAvatar">更换头像</button>
+        <button class="btn btn-outline" id="change-user-frame" type="button" data-i18n="userCenter.changeFrame">更换头像框</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="achievement-shelf-dialog" id="achievement-shelf-dialog" aria-labelledby="achievement-shelf-title">
+    <div class="achievement-shelf-content">
+      <div class="achievement-shelf-heading">
+        <div>
+          <p class="eyebrow" data-i18n="achievement.eyebrow">MILESTONES</p>
+          <h2 id="achievement-shelf-title" data-i18n="achievement.shelfTitle">成就书架</h2>
+          <p class="achievement-shelf-description" data-i18n="achievement.shelfDescription">每一份坚持，都值得被珍藏。</p>
+        </div>
+        <button class="user-center-close" id="achievement-shelf-close" type="button" aria-label="关闭" data-i18n-aria-label="achievement.close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="achievement-shelf-rows" id="achievement-shelf-rows"></div>
+    </div>
+  </dialog>
 
   <main class="page-shell">
     <div class="flip-container" id="page-flip-container">
@@ -49,7 +142,7 @@
           </div>
           <div class="hero-actions">
             <button class="btn btn-primary btn-lg button-primary" type="button" data-page="vocabulary-page" data-i18n="button.openVocabulary">查看词语库</button>
-            <button class="btn btn-outline btn-lg" type="button" data-page="quiz-page" data-i18n="button.start">开始答题</button>
+            <button class="btn btn-outline btn-lg achievement-shelf-trigger" id="achievement-shelf-open" type="button" data-i18n="achievement.button">成就</button>
           </div>
           <div class="home-about">
             <h2 class="home-about-title" data-i18n="about.title">关于 AX Quiz Challenge</h2>
@@ -78,7 +171,97 @@
             <span data-i18n="home.points">每题 10 分</span>
             <strong>100 pts</strong>
           </div>
+          <section class="growth-panel home-growth" data-growth-panel aria-labelledby="home-growth-title">
+            <div class="growth-heading">
+              <h2 id="home-growth-title" data-i18n="growth.title">我的成长</h2>
+              <div class="growth-level-row">
+                <span class="growth-emblem" aria-hidden="true">🪖</span>
+                <strong class="growth-level" data-growth-level>Lv.1</strong>
+              </div>
+            </div>
+            <div class="growth-xp-meta">
+              <span data-i18n="growth.totalXP">累计经验</span>
+              <strong><span data-growth-xp>0</span> XP</strong>
+            </div>
+            <div class="growth-progress-track" data-growth-progress role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span class="growth-progress-fill" data-growth-progress-fill></span>
+            </div>
+            <p class="growth-next" data-growth-next>距离下一级还需 100 XP</p>
+          </section>
         </aside>
+      </div>
+    </section>
+
+    <section class="panel difficulty-page card" id="difficulty-select" aria-labelledby="difficulty-page-title" hidden>
+      <div class="card-body difficulty-page-content">
+        <div class="difficulty-page-heading">
+          <p class="eyebrow" data-i18n="difficultySelection.eyebrow">本轮设置</p>
+          <h1 id="difficulty-page-title" data-i18n="difficultySelection.title">选择答题难度</h1>
+          <p class="intro" data-i18n="difficultySelection.description">选择适合自己的难度，开始本轮练习。</p>
+        </div>
+        <div class="difficulty-card-grid" id="difficulty-options" role="group" aria-labelledby="difficulty-page-title">
+          <button class="difficulty-card difficulty-card--easy" type="button" data-quiz-difficulty="simple" aria-pressed="false">
+            <span class="difficulty-card-level" aria-hidden="true">01</span>
+            <span class="difficulty-card-title" data-i18n="vocabulary.difficultyLabels.easy">简单</span>
+            <span class="difficulty-card-description" data-i18n="difficultySelection.simpleDescription">AI 入门与常用概念</span>
+          </button>
+          <button class="difficulty-card difficulty-card--medium is-selected" type="button" data-quiz-difficulty="normal" aria-pressed="true">
+            <span class="difficulty-card-level" aria-hidden="true">02</span>
+            <span class="difficulty-card-title" data-i18n="vocabulary.difficultyLabels.medium">普通</span>
+            <span class="difficulty-card-description" data-i18n="difficultySelection.normalDescription">核心技术与常见方法</span>
+          </button>
+          <button class="difficulty-card difficulty-card--hard" type="button" data-quiz-difficulty="hard" aria-pressed="false">
+            <span class="difficulty-card-level" aria-hidden="true">03</span>
+            <span class="difficulty-card-title" data-i18n="vocabulary.difficultyLabels.hard">困难</span>
+            <span class="difficulty-card-description" data-i18n="difficultySelection.hardDescription">模型原理与工程细节</span>
+          </button>
+        </div>
+        <p class="difficulty-selection-error" id="difficulty-selection-error" role="status" aria-live="polite"></p>
+        <button class="btn btn-primary btn-lg button-primary difficulty-start-button" id="start-quiz-button" type="button" data-i18n="button.startRound">开始本轮练习</button>
+      </div>
+    </section>
+
+    <section class="panel profile-editor-page card" id="avatar-page" aria-labelledby="avatar-page-title" hidden>
+      <div class="card-body profile-editor-content">
+        <div class="profile-editor-heading">
+          <p class="eyebrow" data-i18n="userCenter.editorEyebrow">个人资料</p>
+          <h1 id="avatar-page-title" data-i18n="userCenter.avatarPageTitle">更换头像</h1>
+          <p class="intro" data-i18n="userCenter.avatarPageDescription">选择一张图片作为你的头像。</p>
+        </div>
+        <div class="avatar-editor-preview-wrap">
+          <span class="avatar-frame avatar-frame--1 user-avatar-large" id="avatar-editor-preview" aria-label="头像预览" data-i18n-aria-label="userCenter.avatarPreview"></span>
+        </div>
+        <div class="avatar-editor-controls">
+          <input class="user-avatar-file" id="avatar-page-file" type="file" accept="image/*" aria-label="选择头像图片" data-i18n-aria-label="userCenter.chooseImage">
+          <label class="btn btn-outline" for="avatar-page-file" data-i18n="userCenter.chooseImage">选择图片</label>
+          <p class="user-avatar-status" id="avatar-editor-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="profile-editor-actions">
+          <button class="btn btn-ghost" type="button" data-profile-editor-cancel data-i18n="userCenter.cancel">取消</button>
+          <button class="btn btn-primary button-primary" id="save-avatar-button" type="button" data-i18n="userCenter.save">保存</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel profile-editor-page card" id="avatar-frame-page" aria-labelledby="avatar-frame-page-title" hidden>
+      <div class="card-body profile-editor-content">
+        <div class="profile-editor-heading">
+          <p class="eyebrow" data-i18n="userCenter.editorEyebrow">个人资料</p>
+          <h1 id="avatar-frame-page-title" data-i18n="userCenter.framePageTitle">更换头像框</h1>
+          <p class="intro" data-i18n="userCenter.framePageDescription">选择已解锁的头像框，预览后保存。</p>
+        </div>
+        <div class="avatar-editor-preview-wrap">
+          <span class="avatar-frame avatar-frame--1 user-avatar-large" id="avatar-frame-editor-preview" aria-label="头像框预览" data-i18n-aria-label="userCenter.framePreview"></span>
+        </div>
+        <section class="avatar-gallery profile-frame-gallery" aria-labelledby="avatar-frame-gallery-title">
+          <h2 id="avatar-frame-gallery-title" data-i18n="userCenter.gallery">头像框图鉴</h2>
+          <div class="avatar-frame-grid" id="avatar-frame-grid"></div>
+        </section>
+        <p class="user-avatar-status" id="avatar-frame-editor-status" role="status" aria-live="polite"></p>
+        <div class="profile-editor-actions">
+          <button class="btn btn-ghost" type="button" data-profile-editor-cancel data-i18n="userCenter.cancel">取消</button>
+          <button class="btn btn-primary button-primary" id="save-avatar-frame-button" type="button" data-i18n="userCenter.save">保存</button>
+        </div>
       </div>
     </section>
 
@@ -103,6 +286,7 @@
                   <th scope="col" data-i18n="vocabulary.chinese">中文</th>
                   <th scope="col" data-i18n="vocabulary.korean">韩文</th>
                   <th scope="col" data-i18n="vocabulary.englishDescription">英文与描述</th>
+                  <th scope="col" data-i18n="vocabulary.difficulty">难度</th>
                 </tr>
               </thead>
               <tbody id="vocabulary-list"></tbody>
@@ -113,7 +297,7 @@
         <p class="vocabulary-empty" id="vocabulary-empty" role="status" hidden data-i18n="vocabulary.noResults">没有找到匹配的词语。</p>
         <p class="speech-status" id="speech-status" role="status" aria-live="polite"></p>
         <div>
-          <button class="btn btn-primary button-primary" id="start-quiz-button" type="button" data-i18n="button.start">开始答题</button>
+          <button class="btn btn-primary button-primary" type="button" data-page="difficulty-select" data-i18n="button.chooseDifficulty">选择答题难度</button>
         </div>
       </div>
     </section>
@@ -139,10 +323,16 @@
         data-i18n-aria-label="accessibility.progress"
       >10%</progress>
 
+      <div class="combo-display" id="combo-display" role="status" aria-live="polite" aria-atomic="true">
+        <span class="combo-flame" aria-hidden="true">🔥</span>
+        <span id="combo-message">连击 ×0</span>
+      </div>
+
       <div class="question-card card">
         <div class="card-body">
           <p class="question-label" data-i18n="quiz.questionExample">中文问题示例</p>
           <h3>“人工智能”的英文术语是什么？</h3>
+          <p class="question-difficulty" id="question-difficulty" hidden></p>
         </div>
       </div>
 
@@ -162,6 +352,23 @@
         <p class="result-label" data-i18n="score.final">最终得分</p>
         <p class="result-score">0<span data-i18n="score.outOf"> / 100 分</span></p>
         <p class="result-note"><span data-i18n="score.highest">历史最高分</span>: 0</p>
+        <section class="growth-panel results-growth" data-growth-panel aria-labelledby="results-growth-title">
+          <div class="growth-heading">
+            <h3 id="results-growth-title" data-i18n="growth.title">我的成长</h3>
+            <div class="growth-level-row">
+              <span class="growth-emblem" aria-hidden="true">🪖</span>
+              <strong class="growth-level" data-growth-level>Lv.1</strong>
+            </div>
+          </div>
+          <div class="growth-xp-meta">
+            <span data-i18n="growth.totalXP">累计经验</span>
+            <strong><span data-growth-xp>0</span> XP</strong>
+          </div>
+          <div class="growth-progress-track" data-growth-progress role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="growth-progress-fill" data-growth-progress-fill></span>
+          </div>
+          <p class="growth-next" data-growth-next>距离下一级还需 100 XP</p>
+        </section>
         <button class="btn btn-primary btn-lg button-primary" type="button" data-i18n="button.replay">再玩一次</button>
       </div>
     </section>
